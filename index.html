@@ -349,6 +349,25 @@
                 padding-bottom: 65px; /* Space for the bottom tabs */
             }
         }
+
+        /* Elderly Mode for parent frame */
+        html[data-elderly="true"] .app-header {
+            height: 85px;
+            padding: 0 24px;
+        }
+        html[data-elderly="true"] .menu-items li {
+            font-size: 16px;
+            padding: 10px 20px;
+        }
+        html[data-elderly="true"] .menu-items li i {
+            font-size: 22px;
+        }
+        html[data-elderly="true"] .brand-title {
+            font-size: 22px;
+        }
+        html[data-elderly="true"] .user-email {
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -548,6 +567,41 @@
             const { error } = await supabase.auth.signOut();
             if (!error) showLogin();
         });
+
+        // Listen for changes from Settings iframe
+        window.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'elderly-mode') {
+                const val = e.data.value ? 'true' : 'false';
+                document.documentElement.setAttribute('data-elderly', val);
+            }
+            if (e.data && e.data.type === 'theme') {
+                const isDark = e.data.value === 'dark' || (e.data.value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.classList.toggle('dark', isDark);
+                document.documentElement.classList.toggle('light', !isDark);
+            }
+        });
+
+        // Load preferences from profile on session check
+        async function loadPreferences() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('elderly_mode, theme')
+                    .eq('id', session.user.id)
+                    .single();
+                if (profile) {
+                    if (profile.elderly_mode) {
+                        document.documentElement.setAttribute('data-elderly', 'true');
+                    }
+                    const theme = profile.theme || 'system';
+                    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    document.documentElement.classList.toggle('dark', isDark);
+                    document.documentElement.classList.toggle('light', !isDark);
+                }
+            }
+        }
+        loadPreferences();
 
         // Initialize
         checkSession();

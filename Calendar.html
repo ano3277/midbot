@@ -96,6 +96,28 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Elderly Mode */
+        html[data-elderly="true"] body {
+            font-size: 130%;
+        }
+        html[data-elderly="true"] h2 {
+            font-size: 30px !important;
+        }
+        html[data-elderly="true"] .rounded-xl,
+        html[data-elderly="true"] .rounded-2xl {
+            border-radius: 1rem !important;
+        }
+        html[data-elderly="true"] button {
+            font-size: 16px !important;
+            padding: 10px 20px !important;
+        }
+        html[data-elderly="true"] .day-cell {
+            min-height: 4rem !important;
+        }
+        html[data-elderly="true"] .day-cell span {
+            font-size: 18px !important;
+        }
+
         /* Calendar specific styles */
         .day-cell { transition: all 0.2s ease; }
         .day-cell.selected { border-color: #003d9b; background-color: #dae2ff; }
@@ -196,6 +218,26 @@
         let currentYear = currentDate.getFullYear();
         let selectedDateStr = null; // format: 'YYYY-MM-DD'
 
+        async function loadPreferences() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('elderly_mode, theme')
+                    .eq('id', session.user.id)
+                    .single();
+                if (profile) {
+                    if (profile.elderly_mode) {
+                        document.documentElement.setAttribute('data-elderly', 'true');
+                    }
+                    const theme = profile.theme || 'system';
+                    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    document.documentElement.classList.toggle('dark', isDark);
+                    document.documentElement.classList.toggle('light', !isDark);
+                }
+            }
+        }
+
         async function init() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
@@ -204,6 +246,7 @@
             }
             currentUser = session.user;
             document.getElementById('app-body').classList.remove('hidden');
+            loadPreferences();
             
             // Set selected date to today initially
             selectedDateStr = toLocalISOString(new Date());

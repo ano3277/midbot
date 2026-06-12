@@ -108,11 +108,26 @@
         }
         /* Elderly Mode adjustments */
         html[data-elderly="true"] body {
-            font-size: 110%; /* Scales up rem units */
+            font-size: 130%;
         }
         html[data-elderly="true"] .elderly-scale {
-            transform: scale(1.05);
+            transform: scale(1.1);
             transform-origin: left center;
+        }
+        html[data-elderly="true"] .toggle-checkbox {
+            width: 2rem !important;
+            height: 2rem !important;
+        }
+        html[data-elderly="true"] .toggle-label {
+            height: 2.25rem !important;
+        }
+        html[data-elderly="true"] select,
+        html[data-elderly="true"] button,
+        html[data-elderly="true"] .rounded-lg {
+            border-radius: 0.75rem !important;
+        }
+        html[data-elderly="true"] .material-symbols-outlined {
+            font-size: 28px !important;
         }
         
         /* Custom scrollbar for desktop */
@@ -367,6 +382,7 @@
             // Preferences Section
             document.getElementById('pref-timezone').value = currentProfile.timezone || 'UTC';
             document.getElementById('pref-theme').value = currentProfile.theme || 'system';
+            applyTheme(currentProfile.theme || 'system');
             
             const elderlyToggle = document.getElementById('pref-elderly');
             elderlyToggle.checked = currentProfile.elderly_mode;
@@ -474,10 +490,22 @@
             document.getElementById('btn-logout').addEventListener('click', logout);
         }
 
+        function applyTheme(theme) {
+            const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', isDark);
+            document.documentElement.classList.toggle('light', !isDark);
+            try {
+                window.parent.document.documentElement.classList.toggle('dark', isDark);
+                window.parent.document.documentElement.classList.toggle('light', !isDark);
+            } catch(e) {}
+            try { window.parent.postMessage({ type: 'theme', value: theme }, '*'); } catch(e) {}
+        }
+
         async function updatePreference(key, value) {
             // Optimistic UI Update
             currentProfile[key] = value;
             if (key === 'elderly_mode') applyElderlyMode(value);
+            if (key === 'theme') applyTheme(value);
             
             if(!currentUser.id) return; // Mock mode
 
@@ -499,7 +527,10 @@
         }
 
         function applyElderlyMode(isElderly) {
-            document.documentElement.setAttribute('data-elderly', isElderly ? 'true' : 'false');
+            const val = isElderly ? 'true' : 'false';
+            document.documentElement.setAttribute('data-elderly', val);
+            try { window.parent.document.documentElement.setAttribute('data-elderly', val); } catch(e) {}
+            try { window.parent.postMessage({ type: 'elderly-mode', value: isElderly }, '*'); } catch(e) {}
         }
 
         // --- Telegram Integration Actions ---

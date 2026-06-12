@@ -84,6 +84,24 @@
             margin: 40px auto;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Elderly Mode adjustments */
+        html[data-elderly="true"] body {
+            font-size: 130%;
+        }
+        html[data-elderly="true"] h1 {
+            font-size: 36px !important;
+        }
+        html[data-elderly="true"] h3 {
+            font-size: 24px !important;
+        }
+        html[data-elderly="true"] .rounded-xl {
+            border-radius: 1rem !important;
+        }
+        html[data-elderly="true"] button {
+            font-size: 16px !important;
+            padding: 12px 24px !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col pb-24 md:pb-0 font-body-md text-body-md antialiased hidden" id="app-body">
@@ -129,6 +147,26 @@
         let currentUser = null;
         let todayDateStr = '';
 
+        async function loadPreferences() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('elderly_mode, theme')
+                    .eq('id', session.user.id)
+                    .single();
+                if (profile) {
+                    if (profile.elderly_mode) {
+                        document.documentElement.setAttribute('data-elderly', 'true');
+                    }
+                    const theme = profile.theme || 'system';
+                    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    document.documentElement.classList.toggle('dark', isDark);
+                    document.documentElement.classList.toggle('light', !isDark);
+                }
+            }
+        }
+
         // Initialize Authentication and verify session
         async function init() {
             const { data: { session }, error } = await supabase.auth.getSession();
@@ -138,6 +176,7 @@
             }
             currentUser = session.user;
             document.getElementById('app-body').classList.remove('hidden');
+            loadPreferences();
 
             // Setup Date display
             const today = new Date();

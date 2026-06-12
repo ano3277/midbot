@@ -109,6 +109,19 @@
             width: 100% !important;
             height: 100% !important;
         }
+        /* Elderly Mode */
+        html[data-elderly="true"] body {
+            font-size: 130%;
+        }
+        html[data-elderly="true"] h2 {
+            font-size: 30px !important;
+        }
+        html[data-elderly="true"] h3 {
+            font-size: 18px !important;
+        }
+        html[data-elderly="true"] .rounded-xl {
+            border-radius: 1rem !important;
+        }
         /* Custom scrollbar for desktop */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -249,9 +262,30 @@
             warning: '#7d5200'
         };
 
+        async function loadPreferences() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('elderly_mode, theme')
+                    .eq('id', session.user.id)
+                    .single();
+                if (profile) {
+                    if (profile.elderly_mode) {
+                        document.documentElement.setAttribute('data-elderly', 'true');
+                    }
+                    const theme = profile.theme || 'system';
+                    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    document.documentElement.classList.toggle('dark', isDark);
+                    document.documentElement.classList.toggle('light', !isDark);
+                }
+            }
+        }
+
         async function init() {
             // Check auth (Standard implementation pattern)
             const { data: { session } } = await supabase.auth.getSession();
+            loadPreferences();
             
             // For preview and Canvas demonstration purposes, we will use comprehensive Mock Data 
             // if there's no valid session, ensuring the beautiful UI renders immediately.

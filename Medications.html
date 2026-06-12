@@ -120,6 +120,23 @@
             margin: 40px auto;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Elderly Mode */
+        html[data-elderly="true"] body {
+            font-size: 130%;
+        }
+        html[data-elderly="true"] h1 {
+            font-size: 36px !important;
+        }
+        html[data-elderly="true"] .rounded-xl {
+            border-radius: 1rem !important;
+        }
+        html[data-elderly="true"] button,
+        html[data-elderly="true"] input,
+        html[data-elderly="true"] select,
+        html[data-elderly="true"] textarea {
+            font-size: 16px !important;
+        }
     </style>
 </head>
 <body class="text-on-background font-body-md min-h-screen flex flex-col antialiased hidden" id="app-body">
@@ -264,6 +281,26 @@
             { val: 3, label: 'Wed' }, { val: 4, label: 'Thu' }, { val: 5, label: 'Fri' }, { val: 6, label: 'Sat' }
         ];
 
+        async function loadPreferences() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('elderly_mode, theme')
+                    .eq('id', session.user.id)
+                    .single();
+                if (profile) {
+                    if (profile.elderly_mode) {
+                        document.documentElement.setAttribute('data-elderly', 'true');
+                    }
+                    const theme = profile.theme || 'system';
+                    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    document.documentElement.classList.toggle('dark', isDark);
+                    document.documentElement.classList.toggle('light', !isDark);
+                }
+            }
+        }
+
         async function init() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
@@ -272,6 +309,7 @@
             }
             currentUser = session.user;
             document.getElementById('app-body').classList.remove('hidden');
+            loadPreferences();
             
             // Generate Days Checkboxes in Modal
             const daysContainer = document.getElementById('days-container');
