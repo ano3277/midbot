@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>MedBot - Calendar</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "tertiary-container": "#7d5200",
+                        "tertiary-fixed-dim": "#ffb950",
+                        "primary": "#003d9b",
+                        "inverse-surface": "#2e3132",
+                        "on-surface": "#191c1e",
+                        "on-secondary-container": "#00734c",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#dae2ff",
+                        "secondary": "#006c47",
+                        "on-tertiary-fixed-variant": "#624000",
+                        "on-secondary-fixed-variant": "#005235",
+                        "tertiary": "#5e3c00",
+                        "on-surface-variant": "#434654",
+                        "on-background": "#191c1e",
+                        "surface-bright": "#f8f9fb",
+                        "tertiary-fixed": "#ffddb3",
+                        "secondary-fixed-dim": "#65dca4",
+                        "inverse-primary": "#b2c5ff",
+                        "on-primary-container": "#c4d2ff",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "surface-container": "#edeef0",
+                        "on-tertiary-fixed": "#291800",
+                        "surface-tint": "#0c56d0",
+                        "secondary-container": "#82f9be",
+                        "outline-variant": "#c3c6d6",
+                        "outline": "#737685",
+                        "surface-container-high": "#e7e8ea",
+                        "surface-container-highest": "#e1e2e4",
+                        "surface-variant": "#e1e2e4",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f3",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "primary-container": "#0052cc",
+                        "surface-dim": "#d9dadc",
+                        "on-tertiary-container": "#ffca81",
+                        "surface": "#f8f9fb",
+                        "on-secondary-fixed": "#002113",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#001848",
+                        "background": "#f8f9fb",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f3f4f6",
+                        "secondary-fixed": "#82f9be"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "32px",
+                        "stack-sm": "8px",
+                        "margin-mobile": "16px",
+                        "unit": "4px",
+                        "stack-md": "16px",
+                        "gutter": "24px",
+                        "stack-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f8f9fb; min-height: max(884px, 100dvh); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        /* Loader */
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid #003d9b; border-radius: 50%;
+            width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 40px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Calendar specific styles */
+        .day-cell { transition: all 0.2s ease; }
+        .day-cell.selected { border-color: #003d9b; background-color: #dae2ff; }
+        .indicator-green { background-color: #006c47; } /* secondary */
+        .indicator-yellow { background-color: #ffb950; } /* tertiary-fixed-dim */
+        .indicator-red { background-color: #ba1a1a; } /* error */
+    </style>
+</head>
+<body class="text-on-background font-body-md min-h-screen flex flex-col antialiased hidden pb-24 md:pb-0" id="app-body">
+
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg pt-12 md:pt-24 pb-32 flex flex-col lg:flex-row gap-8">
+        
+        <!-- Left Side: Calendar View -->
+        <div class="w-full lg:w-2/3 flex flex-col bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant p-4 md:p-6">
+            <!-- Calendar Header -->
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 id="calendar-month-year" class="text-[24px] font-bold text-on-background">Loading...</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="goToToday()" class="px-4 py-1.5 text-[14px] font-semibold text-primary hover:bg-primary-container hover:text-on-primary-container rounded-full transition-colors border border-outline-variant mr-2">
+                        Today
+                    </button>
+                    <button onclick="changeMonth(-1)" class="p-2 text-on-surface-variant hover:bg-surface-container hover:text-primary rounded-full transition-colors flex items-center justify-center">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <button onclick="changeMonth(1)" class="p-2 text-on-surface-variant hover:bg-surface-container hover:text-primary rounded-full transition-colors flex items-center justify-center">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Days of Week Header -->
+            <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                <div class="text-[12px] font-bold text-on-surface-variant uppercase">Sun</div>
+                <div class="text-[12px] font-bold text-on-surface-variant uppercase">Mon</div>
+                <div class="text-[12px] font-bold text-on-surface-variant uppercase">Tue</div>
+                <div class="text-[12px] font-bold text-on-surface-variant uppercase">Wed</div>
+                <div class="text-[12px] font-bold text-on-surface-variant uppercase">Thu</div>
+                <div class="text-[12px] font-bold text-on-surface-variant uppercase">Fri</div>
+                <div class="text-[12px] font-bold text-on-surface-variant uppercase">Sat</div>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2 text-center min-h-[300px] relative">
+                <div class="absolute inset-0 flex items-center justify-center"><div class="loader"></div></div>
+            </div>
+            
+            <!-- Legend -->
+            <div class="mt-6 flex flex-wrap justify-center gap-4 text-[12px] font-medium text-on-surface-variant border-t border-outline-variant pt-4">
+                <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full indicator-green"></div> All Taken</div>
+                <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full indicator-yellow"></div> Partial</div>
+                <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full indicator-red"></div> Missed</div>
+            </div>
+        </div>
+
+        <!-- Right Side: Day Detail Panel -->
+        <div class="w-full lg:w-1/3 flex flex-col">
+            <div id="day-details-panel" class="bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-sm p-6 flex-grow sticky top-24">
+                <div id="details-empty" class="h-full flex flex-col items-center justify-center text-center text-on-surface-variant py-12">
+                    <span class="material-symbols-outlined text-[48px] mb-4 text-outline-variant">touch_app</span>
+                    <p class="font-semibold">Select a day</p>
+                    <p class="text-[14px]">Click any date on the calendar to see medication details.</p>
+                </div>
+                
+                <div id="details-content" class="hidden h-full flex flex-col">
+                    <div class="mb-6 border-b border-outline-variant pb-4">
+                        <h3 id="detail-date" class="text-[20px] font-bold text-on-background">Monday, June 12</h3>
+                        <p id="detail-ratio" class="text-[14px] text-on-surface-variant font-medium mt-1">0/0 doses taken</p>
+                    </div>
+                    <div id="detail-meds-list" class="space-y-4 flex-grow overflow-y-auto custom-scrollbar">
+                        <!-- Med cards go here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- BottomNavBar (Mobile) -->
+    <nav class="md:hidden fixed bottom-0 left-0 w-full h-20 flex justify-around items-center px-4 pb-safe bg-surface-container-lowest border-t border-outline-variant z-50 shadow-sm">
+        <a href="index.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container active:scale-95 transition-transform duration-150 rounded-lg group">
+            <span class="material-symbols-outlined mb-1 group-hover:text-primary transition-colors">today</span>
+            <span class="text-[12px] font-semibold group-hover:text-primary transition-colors">Today</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-150">
+            <span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+            <span class="text-[12px] font-bold">Calendar</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container active:scale-95 transition-transform duration-150 rounded-lg group">
+            <span class="material-symbols-outlined mb-1 group-hover:text-primary transition-colors">medication</span>
+            <span class="text-[12px] font-semibold group-hover:text-primary transition-colors">Meds</span>
+        </a>
+    </nav>
+
+    <!-- Supabase & App Logic -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+        const supabaseUrl = 'https://nzlsvtquirifyjjpekaa.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56bHN2dHF1aXJpZnlqanBla2FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MjQ3OTUsImV4cCI6MjA5NjQwMDc5NX0.GsHMQrI17QULABnjiQDT3MGqnI1AEmh5gx-CY5BLA1M'
+        const supabase = createClient(supabaseUrl, supabaseKey)
+
+        let currentUser = null;
+        let activeMedications = []; // Holds meds with schedules
+        let monthlyLogs = []; // Holds logs for the currently viewed month
+
+        // Calendar State
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth(); // 0-11
+        let currentYear = currentDate.getFullYear();
+        let selectedDateStr = null; // format: 'YYYY-MM-DD'
+
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'index.html'; // Adjust based on your auth entry point
+                return;
+            }
+            currentUser = session.user;
+            document.getElementById('app-body').classList.remove('hidden');
+            
+            // Set selected date to today initially
+            selectedDateStr = toLocalISOString(new Date());
+            
+            await loadMedications();
+            await loadMonthData();
+        }
+
+        // --- Utils ---
+        function toLocalISOString(date) {
+            const offset = date.getTimezoneOffset();
+            const d = new Date(date.getTime() - (offset*60*1000));
+            return d.toISOString().split('T')[0];
+        }
+
+        function utcToLocalTime(utcTimeStr) {
+            const [hours, minutes, seconds] = utcTimeStr.split(':');
+            const d = new Date();
+            d.setUTCHours(parseInt(hours), parseInt(minutes), parseInt(seconds || 0), 0);
+            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function formatLocalTime(localTimeStr) {
+            const [hourStr, minuteStr] = localTimeStr.split(':');
+            let hours = parseInt(hourStr);
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            return `${hours}:${minuteStr} ${ampm}`;
+        }
+
+        function getMonthName(monthIndex) {
+            const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            return months[monthIndex];
+        }
+
+        // --- Data Fetching ---
+        
+        // Fetch ALL medications and their schedules for calculation
+        async function loadMedications() {
+            try {
+                const { data, error } = await supabase
+                    .from('medications')
+                    .select(`
+                        id, name, image_url, start_date, end_date, is_active,
+                        schedules (id, time_utc, days_of_week)
+                    `)
+                    .eq('user_id', currentUser.id);
+
+                if (error) throw error;
+                activeMedications = data;
+            } catch (err) {
+                console.error("Error loading medications:", err);
+            }
+        }
+
+        // Fetch logs ONLY for the currently displayed month
+        async function loadMonthData() {
+            // Show loaders
+            document.getElementById('calendar-grid').innerHTML = '<div class="absolute inset-0 flex items-center justify-center"><div class="loader"></div></div>';
+            
+            // Update Header
+            document.getElementById('calendar-month-year').textContent = `${getMonthName(currentMonth)} ${currentYear}`;
+
+            // Calculate date range for the current month
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const startDateStr = toLocalISOString(firstDay);
+            const endDateStr = toLocalISOString(lastDay);
+
+            try {
+                const { data, error } = await supabase
+                    .from('medication_logs')
+                    .select('id, schedule_id, medication_id, scheduled_date, scheduled_time_utc, status, taken_at')
+                    .eq('user_id', currentUser.id)
+                    .gte('scheduled_date', startDateStr)
+                    .lte('scheduled_date', endDateStr);
+
+                if (error) throw error;
+                monthlyLogs = data || [];
+                
+                renderCalendar();
+                if (selectedDateStr) renderDayDetails(selectedDateStr);
+
+            } catch (err) {
+                console.error("Error loading monthly logs:", err);
+            }
+        }
+
+        // --- Logic & Rendering ---
+
+        // Determine what expected doses exist for a specific date string (YYYY-MM-DD)
+        function getExpectedDosesForDate(dateStr) {
+            const targetDate = new Date(dateStr + "T00:00:00");
+            const dayOfWeek = targetDate.getDay(); // 0-6
+            let expected = [];
+
+            activeMedications.forEach(med => {
+                // Check if med is/was active on this date
+                if (med.start_date > dateStr) return; // Hasn't started yet
+                if (med.end_date && med.end_date < dateStr) return; // Ended before this date
+                
+                // If soft-deleted (is_active = false) but date is past, we ideally want to know when it was deleted.
+                // For simplicity in this schema, we still show it if it matches the start/end date logic.
+                
+                if (!med.schedules) return;
+
+                med.schedules.forEach(sched => {
+                    if (sched.days_of_week.includes(dayOfWeek)) {
+                        expected.push({
+                            medication: med,
+                            schedule: sched,
+                            scheduled_date: dateStr
+                        });
+                    }
+                });
+            });
+
+            // Sort expected doses by local time
+            expected.sort((a, b) => {
+                const timeA = utcToLocalTime(a.schedule.time_utc);
+                const timeB = utcToLocalTime(b.schedule.time_utc);
+                return timeA.localeCompare(timeB);
+            });
+
+            return expected;
+        }
+
+        // Evaluate the status of a specific day for color coding
+        function evaluateDayStatus(dateStr) {
+            const todayStr = toLocalISOString(new Date());
+            if (dateStr > todayStr) return 'future'; // Skip future dates
+
+            const expected = getExpectedDosesForDate(dateStr);
+            if (expected.length === 0) return 'none'; // No meds scheduled
+
+            const logsForDay = monthlyLogs.filter(log => log.scheduled_date === dateStr);
+            const takenCount = logsForDay.filter(log => log.status === 'taken').length;
+
+            if (takenCount >= expected.length) return 'green'; // All taken (handles if they took extra, though unlikely)
+            if (takenCount > 0) return 'yellow'; // Partial
+            
+            // If none taken, and it's strictly in the past, it's missed. 
+            // If it's today, it might just be pending, but visually we can flag it red if it's completely untouched so far, 
+            // or yellow. The prompt says "Red - All scheduled missed". We'll consider pending as missed for visual simplicity if 0 taken.
+            return 'red'; 
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay(); // 0 (Sun) to 6 (Sat)
+
+            // Fill empty slots before the first day
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "p-2 opacity-0";
+                grid.appendChild(emptyCell);
+            }
+
+            // Create actual days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateObj = new Date(currentYear, currentMonth, day);
+                const dateStr = toLocalISOString(dateObj);
+                
+                const status = evaluateDayStatus(dateStr);
+                const isSelected = dateStr === selectedDateStr;
+                const isToday = dateStr === toLocalISOString(new Date());
+
+                const cell = document.createElement('button');
+                cell.className = `day-cell relative h-12 md:h-16 w-full rounded-lg border flex flex-col items-center justify-start pt-1 md:pt-2 hover:bg-surface-container transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${isSelected ? 'selected border-primary font-bold text-primary' : 'border-outline-variant/30 text-on-surface'} ${isToday && !isSelected ? 'bg-primary-fixed/30 font-bold' : 'bg-surface'}`;
+                
+                cell.onclick = () => {
+                    selectedDateStr = dateStr;
+                    renderCalendar(); // Re-render to update selection highlighting
+                    renderDayDetails(dateStr);
+                };
+
+                let indicatorHtml = '';
+                if (status === 'green') {
+                    indicatorHtml = `<div class="absolute bottom-1.5 md:bottom-2 left-1/2 -translate-x-1/2 w-1.5 md:w-2 h-1.5 md:h-2 rounded-full indicator-green"></div>`;
+                } else if (status === 'yellow') {
+                    indicatorHtml = `<div class="absolute bottom-1.5 md:bottom-2 left-1/2 -translate-x-1/2 w-1.5 md:w-2 h-1.5 md:h-2 rounded-full indicator-yellow"></div>`;
+                } else if (status === 'red') {
+                    indicatorHtml = `<div class="absolute bottom-1.5 md:bottom-2 left-1/2 -translate-x-1/2 w-1.5 md:w-2 h-1.5 md:h-2 rounded-full indicator-red"></div>`;
+                }
+
+                cell.innerHTML = `
+                    <span class="text-[14px] md:text-[16px]">${day}</span>
+                    ${indicatorHtml}
+                `;
+                
+                grid.appendChild(cell);
+            }
+        }
+
+        // Render the right-side detail panel for the selected date
+        window.renderDayDetails = function(dateStr) {
+            document.getElementById('details-empty').classList.add('hidden');
+            document.getElementById('details-content').classList.remove('hidden');
+
+            const dateObj = new Date(dateStr + "T00:00:00");
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            document.getElementById('detail-date').textContent = dateObj.toLocaleDateString('en-US', options);
+
+            const listContainer = document.getElementById('detail-meds-list');
+            listContainer.innerHTML = '';
+
+            const expected = getExpectedDosesForDate(dateStr);
+            const todayStr = toLocalISOString(new Date());
+            const isToday = dateStr === todayStr;
+            const isPast = dateStr < todayStr;
+
+            if (expected.length === 0) {
+                document.getElementById('detail-ratio').textContent = "No medications scheduled";
+                listContainer.innerHTML = `<div class="text-center text-on-surface-variant py-8 bg-surface rounded-xl border border-dashed border-outline-variant mt-4"><p class="text-[14px]">You have a clear schedule for this day!</p></div>`;
+                return;
+            }
+
+            let takenCount = 0;
+
+            expected.forEach(item => {
+                const log = monthlyLogs.find(l => l.schedule_id === item.schedule.id && l.scheduled_date === dateStr);
+                
+                let currentStatus = 'pending';
+                let actualTimeStr = '';
+                
+                if (log) {
+                    currentStatus = log.status;
+                    if (log.taken_at) {
+                        const takenDate = new Date(log.taken_at);
+                        actualTimeStr = formatLocalTime(`${String(takenDate.getHours()).padStart(2,'0')}:${String(takenDate.getMinutes()).padStart(2,'0')}`);
+                    }
+                } else if (isPast) {
+                    currentStatus = 'missed'; // If no log in the past, it's missed
+                }
+
+                if (currentStatus === 'taken') takenCount++;
+
+                const localTime24 = utcToLocalTime(item.schedule.time_utc);
+                const localTime12 = formatLocalTime(localTime24);
+
+                // Build UI card
+                const card = document.createElement('div');
+                card.className = "p-4 rounded-xl border border-outline-variant bg-surface flex flex-col md:flex-row md:justify-between md:items-center gap-4 relative overflow-hidden";
+                
+                let statusBadge = '';
+                let actionBtn = '';
+                
+                if (currentStatus === 'taken') {
+                    statusBadge = `<span class="inline-flex items-center gap-1 text-[12px] font-bold text-secondary bg-secondary-container px-2 py-1 rounded-md"><span class="material-symbols-outlined text-[14px]">check_circle</span> Taken ${actualTimeStr ? 'at '+actualTimeStr : ''}</span>`;
+                } else if (currentStatus === 'missed') {
+                    statusBadge = `<span class="inline-flex items-center gap-1 text-[12px] font-bold text-error bg-error-container px-2 py-1 rounded-md"><span class="material-symbols-outlined text-[14px]">cancel</span> Missed</span>`;
+                } else {
+                    statusBadge = `<span class="inline-flex items-center gap-1 text-[12px] font-bold text-on-surface-variant bg-surface-variant px-2 py-1 rounded-md"><span class="material-symbols-outlined text-[14px]">schedule</span> Pending</span>`;
+                    
+                    // Show TAKE button ONLY if it's today
+                    if (isToday) {
+                        actionBtn = `<button onclick="markAsTaken('${item.schedule.id}', '${item.medication.id}', '${item.schedule.time_utc}', '${dateStr}')" class="w-full md:w-auto bg-primary text-on-primary px-4 py-2 rounded-lg font-semibold text-[14px] hover:bg-primary-container hover:text-on-primary-container transition-colors flex items-center justify-center gap-2 mt-2 md:mt-0"><span class="material-symbols-outlined text-[18px]">done</span> Take</button>`;
+                    }
+                }
+
+                const iconHtml = item.medication.image_url 
+                    ? `<img src="${item.medication.image_url}" alt="${item.medication.name}" class="w-10 h-10 rounded-full object-cover border border-outline-variant">`
+                    : `<div class="w-10 h-10 rounded-full bg-primary-fixed-dim/20 text-primary flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pill</span></div>`;
+
+                card.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        ${iconHtml}
+                        <div>
+                            <h4 class="font-bold text-on-surface leading-tight">${item.medication.name}</h4>
+                            <div class="text-[13px] text-on-surface-variant font-medium mt-0.5">${localTime12}</div>
+                            <div class="mt-2">${statusBadge}</div>
+                        </div>
+                    </div>
+                    ${actionBtn}
+                `;
+                
+                listContainer.appendChild(card);
+            });
+
+            document.getElementById('detail-ratio').textContent = `${takenCount}/${expected.length} doses taken`;
+        }
+
+        // --- Actions ---
+
+        // Called by navigation buttons
+        window.changeMonth = function(offset) {
+            currentMonth += offset;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            loadMonthData();
+        }
+
+        window.goToToday = function() {
+            const today = new Date();
+            currentMonth = today.getMonth();
+            currentYear = today.getFullYear();
+            selectedDateStr = toLocalISOString(today);
+            loadMonthData(); // Will also re-render grid and details
+        }
+
+        // Mark a specific dose as taken from the calendar view
+        window.markAsTaken = async function(scheduleId, medId, timeUtc, dateStr) {
+            try {
+                const { error } = await supabase
+                    .from('medication_logs')
+                    .upsert({
+                        schedule_id: scheduleId,
+                        medication_id: medId,
+                        user_id: currentUser.id,
+                        scheduled_date: dateStr,
+                        scheduled_time_utc: timeUtc,
+                        status: 'taken',
+                        taken_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'schedule_id, scheduled_date'
+                    });
+
+                if (error) throw error;
+                
+                // Re-fetch current month data to update state and UI
+                await loadMonthData();
+            } catch (err) {
+                console.error("Error marking as taken:", err);
+                alert("Failed to mark medication as taken.");
+            }
+        }
+
+        // Boot
+        init();
+    </script>
+</body>
+</html>

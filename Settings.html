@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>MedBot - Settings</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "tertiary-container": "#7d5200",
+                        "tertiary-fixed-dim": "#ffb950",
+                        "primary": "#003d9b",
+                        "inverse-surface": "#2e3132",
+                        "on-surface": "#191c1e",
+                        "on-secondary-container": "#00734c",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#dae2ff",
+                        "secondary": "#006c47",
+                        "on-tertiary-fixed-variant": "#624000",
+                        "on-secondary-fixed-variant": "#005235",
+                        "tertiary": "#5e3c00",
+                        "on-surface-variant": "#434654",
+                        "on-background": "#191c1e",
+                        "surface-bright": "#f8f9fb",
+                        "tertiary-fixed": "#ffddb3",
+                        "secondary-fixed-dim": "#65dca4",
+                        "inverse-primary": "#b2c5ff",
+                        "on-primary-container": "#c4d2ff",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "surface-container": "#edeef0",
+                        "on-tertiary-fixed": "#291800",
+                        "surface-tint": "#0c56d0",
+                        "secondary-container": "#82f9be",
+                        "outline-variant": "#c3c6d6",
+                        "outline": "#737685",
+                        "surface-container-high": "#e7e8ea",
+                        "surface-container-highest": "#e1e2e4",
+                        "surface-variant": "#e1e2e4",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f3",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "primary-container": "#0052cc",
+                        "surface-dim": "#d9dadc",
+                        "on-tertiary-container": "#ffca81",
+                        "surface": "#f8f9fb",
+                        "on-secondary-fixed": "#002113",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#001848",
+                        "background": "#f8f9fb",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f3f4f6",
+                        "secondary-fixed": "#82f9be"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "32px",
+                        "stack-sm": "8px",
+                        "margin-mobile": "16px",
+                        "unit": "4px",
+                        "stack-md": "16px",
+                        "gutter": "24px",
+                        "stack-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+            background-color: #f8f9fb;
+            transition: font-size 0.2s ease;
+        }
+        /* Elderly Mode adjustments */
+        html[data-elderly="true"] body {
+            font-size: 110%; /* Scales up rem units */
+        }
+        html[data-elderly="true"] .elderly-scale {
+            transform: scale(1.05);
+            transform-origin: left center;
+        }
+        
+        /* Custom scrollbar for desktop */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #c3c6d6; border-radius: 10px; }
+
+        /* Custom Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #003d9b; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #003d9b; }
+        .toggle-checkbox:checked + .toggle-label:after { transform: translateX(100%); border-color: white; }
+    </style>
+</head>
+<body class="text-on-background font-body-md min-h-screen pb-24 antialiased">
+
+    <!-- Main Content -->
+    <main class="w-full max-w-3xl mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg flex flex-col gap-stack-lg">
+        
+        <header>
+            <h1 class="text-[28px] md:text-[32px] font-bold text-on-surface tracking-tight">Settings</h1>
+        </header>
+
+        <!-- Section 1: Profile -->
+        <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex items-center gap-4 shadow-sm">
+            <div class="h-16 w-16 rounded-full overflow-hidden border border-outline-variant flex-shrink-0 bg-surface-container">
+                <img id="profile-avatar" alt="User Avatar" class="w-full h-full object-cover hidden" src="" />
+                <div id="profile-avatar-fallback" class="w-full h-full flex items-center justify-center bg-primary-fixed-dim text-on-primary-fixed font-bold text-[24px]"></div>
+            </div>
+            <div class="flex flex-col">
+                <h2 id="profile-name" class="text-[20px] font-semibold text-on-surface elderly-scale">Loading...</h2>
+                <p id="profile-email" class="text-[16px] text-on-surface-variant elderly-scale">...</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Notifications / Telegram Integration -->
+        <section class="flex flex-col gap-2">
+            <h3 class="text-[14px] font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Notifications</h3>
+            
+            <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
+                <!-- Telegram Header -->
+                <div class="p-6 border-b border-surface-container flex items-start justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[#0088cc]/10 flex items-center justify-center text-[#0088cc]">
+                            <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">send</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <h4 class="text-[18px] md:text-[20px] font-semibold text-on-surface elderly-scale">Telegram Reminders</h4>
+                            <p class="text-[14px] text-on-surface-variant mt-0.5 elderly-scale">Receive instant dosage alerts</p>
+                        </div>
+                    </div>
+                    <div id="telegram-status-badge" class="bg-surface-container text-on-surface-variant text-[12px] font-medium px-3 py-1.5 rounded-full flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-outline"></span>
+                        Checking...
+                    </div>
+                </div>
+                
+                <!-- Dynamic Content Container -->
+                <div id="telegram-content" class="p-6 bg-surface-bright flex flex-col gap-4">
+                    <!-- Javascript will inject state here (Unlinked, Generating, Linked) -->
+                </div>
+
+                <!-- Action Footer -->
+                <div class="p-4 bg-surface-container-lowest border-t border-surface-container" id="telegram-action-footer">
+                     <!-- Javascript will inject button here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Preferences -->
+        <section class="flex flex-col gap-2">
+            <h3 class="text-[14px] font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Preferences</h3>
+            
+            <div class="bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col shadow-sm">
+                
+                <!-- Timezone -->
+                <div class="p-4 flex items-center justify-between border-b border-surface-container">
+                    <div class="flex flex-col">
+                        <label for="pref-timezone" class="text-[16px] font-medium text-on-surface elderly-scale">Timezone</label>
+                        <span class="text-[14px] text-on-surface-variant elderly-scale">Set your local time for reminders</span>
+                    </div>
+                    <select id="pref-timezone" class="bg-surface border border-outline-variant text-on-surface text-[14px] rounded-lg focus:ring-primary focus:border-primary p-2 w-48 truncate">
+                        <!-- Options populated via JS -->
+                    </select>
+                </div>
+
+                <!-- Theme -->
+                <div class="p-4 flex items-center justify-between border-b border-surface-container">
+                    <div class="flex flex-col">
+                        <label for="pref-theme" class="text-[16px] font-medium text-on-surface elderly-scale">App Theme</label>
+                        <span class="text-[14px] text-on-surface-variant elderly-scale">Choose your visual preference</span>
+                    </div>
+                    <select id="pref-theme" class="bg-surface border border-outline-variant text-on-surface text-[14px] rounded-lg focus:ring-primary focus:border-primary p-2 w-32">
+                        <option value="system">System Default</option>
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                </div>
+
+                <!-- Elderly Mode -->
+                <div class="p-4 flex items-center justify-between rounded-b-xl hover:bg-surface-bright transition-colors">
+                    <div class="flex flex-col">
+                        <span class="text-[16px] font-medium text-on-surface elderly-scale">Elderly-Friendly Mode</span>
+                        <span class="text-[14px] text-on-surface-variant elderly-scale">Increases text size and simplifies UI</span>
+                    </div>
+                    <!-- Custom Toggle -->
+                    <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                        <input type="checkbox" id="pref-elderly" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-outline-variant appearance-none cursor-pointer transition-transform duration-200 ease-in-out z-10 top-[2px] left-[2px]"/>
+                        <label for="pref-elderly" class="toggle-label block overflow-hidden h-7 rounded-full bg-surface-variant cursor-pointer transition-colors duration-200 ease-in-out"></label>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Section 4: Account -->
+        <section class="flex flex-col gap-2 mb-8">
+            <h3 class="text-[14px] font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Account</h3>
+            
+            <div class="bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col overflow-hidden shadow-sm">
+                <div class="p-4 flex items-center gap-3 border-b border-surface-container cursor-pointer hover:bg-surface-bright transition-colors">
+                    <span class="material-symbols-outlined text-outline">policy</span>
+                    <span class="text-[16px] text-on-surface elderly-scale">Privacy Policy</span>
+                </div>
+                <div class="p-4 flex items-center gap-3 border-b border-surface-container cursor-pointer hover:bg-surface-bright transition-colors">
+                    <span class="material-symbols-outlined text-outline">description</span>
+                    <span class="text-[16px] text-on-surface elderly-scale">Terms of Service</span>
+                </div>
+                <button id="btn-logout" class="p-4 flex items-center gap-3 w-full text-left cursor-pointer hover:bg-error-container transition-colors group">
+                    <span class="material-symbols-outlined text-error">logout</span>
+                    <span class="text-[16px] text-error font-medium group-hover:text-on-error-container elderly-scale">Log Out</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- BottomNavBar (Mobile) -->
+    <nav class="fixed bottom-0 left-0 w-full h-20 flex justify-around items-center px-4 pb-safe bg-surface-container-lowest border-t border-outline-variant shadow-sm z-50 md:hidden">
+        <a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container transition-colors rounded-lg" href="index.html">
+            <span class="material-symbols-outlined mb-1">today</span>
+            <span class="text-[12px] font-medium">Today</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container transition-colors rounded-lg" href="meds.html">
+            <span class="material-symbols-outlined mb-1">medication</span>
+            <span class="text-[12px] font-medium">Meds</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container transition-colors rounded-lg" href="statistics.html">
+            <span class="material-symbols-outlined mb-1">analytics</span>
+            <span class="text-[12px] font-medium">History</span>
+        </a>
+        <a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-150" href="settings.html">
+            <span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">settings</span>
+            <span class="text-[12px] font-bold">Settings</span>
+        </a>
+    </nav>
+
+    <!-- App Logic & Supabase Integration -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+        // Initialize Supabase Client
+        const supabaseUrl = 'https://nzlsvtquirifyjjpekaa.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56bHN2dHF1aXJpZnlqanBla2FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MjQ3OTUsImV4cCI6MjA5NjQwMDc5NX0.GsHMQrI17QULABnjiQDT3MGqnI1AEmh5gx-CY5BLA1M';
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        let currentUser = null;
+        let currentProfile = null;
+        let telegramData = null;
+
+        // Common Timezones Array
+        const timezones = [
+            "UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", 
+            "Europe/London", "Europe/Paris", "Asia/Dubai", "Asia/Tokyo", "Australia/Sydney"
+        ];
+
+        async function init() {
+            populateTimezones();
+
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+                console.log("No valid session. Using Mock Data for visual demonstration.");
+                loadMockData();
+                return;
+            }
+            
+            currentUser = session.user;
+            await loadUserData();
+            bindEvents();
+        }
+
+        function populateTimezones() {
+            const select = document.getElementById('pref-timezone');
+            timezones.forEach(tz => {
+                const opt = document.createElement('option');
+                opt.value = tz;
+                opt.textContent = tz;
+                select.appendChild(opt);
+            });
+            // Try to guess default if nothing set
+            if (!select.value) {
+                try { select.value = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
+            }
+        }
+
+        async function loadUserData() {
+            try {
+                // 1. Fetch Profile
+                const { data: profile, error: profErr } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (profErr && profErr.code !== 'PGRST116') throw profErr; // Ignore 'not found' initially
+                currentProfile = profile || { display_name: 'New User', timezone: 'UTC', elderly_mode: false, theme: 'system' };
+
+                // 2. Fetch Telegram Data
+                const { data: tgData, error: tgErr } = await supabase
+                    .from('telegram_users')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .single();
+                
+                if (tgErr && tgErr.code !== 'PGRST116') throw tgErr;
+                telegramData = tgData;
+
+                renderUI();
+
+            } catch (err) {
+                console.error("Error loading data", err);
+                alert("Failed to load settings data.");
+            }
+        }
+
+        // --- Mock Data Fallback ---
+        function loadMockData() {
+            currentUser = { email: "sarah.jenkins@clinic.com" };
+            currentProfile = { 
+                display_name: "Dr. Sarah Jenkins", 
+                avatar_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuAdtB6LKCI9v2fFugua7Ite3_Vc5xDBXL-OaFMoaOB0myvIjr4bU7jHLvkBedDTdWRBGVj4jQ5rpQDehdgqtZtlbyMJGrSMyDH8mWTXhoygJAZKHQ9x0aYmrSLkUjL1nhTXFULIB9awTWlVIHCKZsP8tcawh5QIPzt44uvcX8sHUpGa8I0ic3n63-ec_0fdqs_WKicDSCvTOPihoL5CYp2q3ysu42vcj_x8mYeF_8lzowxoDH1bteaeDgH3FOKo8CaQXnpgBQUAhik", 
+                timezone: "America/New_York", 
+                elderly_mode: false, 
+                theme: "system" 
+            };
+            
+            // Start with Unlinked state for demonstration, but show the code active
+            telegramData = {
+                link_code: "8273-9182",
+                chat_id: null // Set to a number to mock "Connected" state
+            };
+            
+            renderUI();
+            bindEvents();
+        }
+
+        function renderUI() {
+            // Profile Section
+            document.getElementById('profile-name').textContent = currentProfile.display_name || 'User';
+            document.getElementById('profile-email').textContent = currentUser.email;
+
+            if (currentProfile.avatar_url) {
+                const img = document.getElementById('profile-avatar');
+                img.src = currentProfile.avatar_url;
+                img.classList.remove('hidden');
+                document.getElementById('profile-avatar-fallback').classList.add('hidden');
+            } else {
+                const init = (currentProfile.display_name || 'U').charAt(0).toUpperCase();
+                document.getElementById('profile-avatar-fallback').textContent = init;
+            }
+
+            // Preferences Section
+            document.getElementById('pref-timezone').value = currentProfile.timezone || 'UTC';
+            document.getElementById('pref-theme').value = currentProfile.theme || 'system';
+            
+            const elderlyToggle = document.getElementById('pref-elderly');
+            elderlyToggle.checked = currentProfile.elderly_mode;
+            applyElderlyMode(currentProfile.elderly_mode);
+
+            // Telegram Section
+            renderTelegramSection();
+        }
+
+        function renderTelegramSection() {
+            const contentDiv = document.getElementById('telegram-content');
+            const footerDiv = document.getElementById('telegram-action-footer');
+            const badge = document.getElementById('telegram-status-badge');
+
+            // Determine State
+            const isConnected = telegramData && telegramData.chat_id;
+            const hasPendingCode = telegramData && telegramData.link_code && !isConnected;
+
+            if (isConnected) {
+                // STATE 1: Connected
+                badge.className = "bg-secondary-container text-on-secondary-container text-[12px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5";
+                badge.innerHTML = `<span class="material-symbols-outlined text-[14px]">check_circle</span> Connected`;
+                
+                contentDiv.innerHTML = `
+                    <p class="text-[16px] text-on-surface">Your account is successfully linked to Telegram.</p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="material-symbols-outlined text-primary">account_circle</span>
+                        <span class="text-on-surface-variant font-medium">@${telegramData.telegram_username || 'User'}</span>
+                    </div>
+                `;
+                
+                footerDiv.innerHTML = `
+                    <button id="btn-tg-unlink" class="w-full bg-error-container text-on-error-container hover:bg-error hover:text-on-error h-12 rounded-lg font-semibold text-[14px] flex items-center justify-center gap-2 transition-colors">
+                        Unlink Telegram
+                        <span class="material-symbols-outlined text-[18px]">link_off</span>
+                    </button>
+                `;
+                document.getElementById('btn-tg-unlink').addEventListener('click', unlinkTelegram);
+
+            } else if (hasPendingCode) {
+                // STATE 2: Pending connection (Code Generated)
+                badge.className = "bg-surface-container text-on-surface-variant text-[12px] font-medium px-3 py-1.5 rounded-full flex items-center gap-2";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-outline"></span> Pending...`;
+                
+                contentDiv.innerHTML = `
+                    <p class="text-[15px] text-on-surface">To receive reminders, link your account by following these steps:</p>
+                    <ol class="flex flex-col gap-3 text-[14px] text-on-surface-variant pl-2 border-l-2 border-surface-container-high ml-2">
+                        <li class="flex items-start gap-2 relative">
+                            <span class="font-bold text-primary w-4">1.</span>
+                            <span>Open <strong class="text-on-surface">@MedBot</strong> on the Telegram app.</span>
+                        </li>
+                        <li class="flex items-start gap-2 relative">
+                            <span class="font-bold text-primary w-4">2.</span>
+                            <span>Send the message <code class="bg-surface-container-high text-on-surface px-1.5 py-0.5 rounded font-mono">/start</code></span>
+                        </li>
+                        <li class="flex items-start gap-2 relative">
+                            <span class="font-bold text-primary w-4">3.</span>
+                            <span class="flex flex-col gap-2 w-full">
+                                Enter your unique secure ID when prompted:
+                                <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-3 flex justify-between items-center mt-1">
+                                    <span class="font-mono text-[20px] font-bold tracking-[0.2em] text-on-surface">${telegramData.link_code}</span>
+                                    <button onclick="navigator.clipboard.writeText('${telegramData.link_code}'); alert('Copied!')" class="text-primary hover:bg-primary-fixed-dim/20 p-2 rounded-full transition-colors flex items-center justify-center" title="Copy Code">
+                                        <span class="material-symbols-outlined text-[20px]">content_copy</span>
+                                    </button>
+                                </div>
+                            </span>
+                        </li>
+                    </ol>
+                `;
+                
+                footerDiv.innerHTML = `
+                    <div class="flex gap-3">
+                        <button id="btn-tg-cancel" class="flex-1 bg-surface border border-outline-variant text-on-surface h-12 rounded-lg font-semibold text-[14px] hover:bg-surface-container transition-colors">Cancel</button>
+                        <a href="https://t.me/MedBot" target="_blank" class="flex-1 bg-primary text-on-primary h-12 rounded-lg font-semibold text-[14px] flex items-center justify-center gap-2 hover:opacity-90 transition-all">
+                            Open Telegram <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                        </a>
+                    </div>
+                `;
+                document.getElementById('btn-tg-cancel').addEventListener('click', unlinkTelegram); // Cancel just unlinks/deletes
+
+            } else {
+                // STATE 3: Not Linked, No Code
+                badge.className = "bg-surface-container text-on-surface-variant text-[12px] font-medium px-3 py-1.5 rounded-full flex items-center gap-2";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-outline"></span> Not Connected`;
+                
+                contentDiv.innerHTML = `
+                    <p class="text-[15px] text-on-surface">Link your Telegram account to instantly receive reliable reminders when it's time to take your medication.</p>
+                `;
+                
+                footerDiv.innerHTML = `
+                    <button id="btn-tg-generate" class="w-full bg-primary text-on-primary h-12 rounded-lg font-semibold text-[14px] flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-all">
+                        Generate Link Code
+                        <span class="material-symbols-outlined text-[18px]">add_link</span>
+                    </button>
+                `;
+                document.getElementById('btn-tg-generate').addEventListener('click', generateTelegramCode);
+            }
+        }
+
+        // --- Event Binding & Handlers ---
+        function bindEvents() {
+            document.getElementById('pref-timezone').addEventListener('change', (e) => updatePreference('timezone', e.target.value));
+            document.getElementById('pref-theme').addEventListener('change', (e) => updatePreference('theme', e.target.value));
+            document.getElementById('pref-elderly').addEventListener('change', (e) => updatePreference('elderly_mode', e.target.checked));
+            document.getElementById('btn-logout').addEventListener('click', logout);
+        }
+
+        async function updatePreference(key, value) {
+            // Optimistic UI Update
+            currentProfile[key] = value;
+            if (key === 'elderly_mode') applyElderlyMode(value);
+            
+            if(!currentUser.id) return; // Mock mode
+
+            try {
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({ [key]: value })
+                    .eq('id', currentUser.id);
+                
+                if (error) {
+                    // Create if not exists logic might be needed depending on Auth setup, 
+                    // assuming standard profile trigger exists.
+                    throw error;
+                }
+            } catch (err) {
+                console.error(`Error updating ${key}:`, err);
+                alert(`Failed to save ${key} setting.`);
+            }
+        }
+
+        function applyElderlyMode(isElderly) {
+            document.documentElement.setAttribute('data-elderly', isElderly ? 'true' : 'false');
+        }
+
+        // --- Telegram Integration Actions ---
+        async function generateTelegramCode() {
+            // Generate a readable 8-digit code format like 8273-9182
+            const rawCode = Math.floor(10000000 + Math.random() * 90000000).toString();
+            const formattedCode = `${rawCode.substring(0,4)}-${rawCode.substring(4,8)}`;
+            
+            // 15 minute expiry
+            const expiry = new Date(Date.now() + 15 * 60000).toISOString();
+
+            if (!currentUser.id) {
+                // Mock behavior
+                telegramData = { link_code: formattedCode, chat_id: null };
+                renderTelegramSection();
+                return;
+            }
+
+            try {
+                // Upsert telegram_users record
+                const { error } = await supabase
+                    .from('telegram_users')
+                    .upsert({
+                        user_id: currentUser.id,
+                        link_code: formattedCode,
+                        link_code_expires_at: expiry,
+                        is_active: true
+                    }, { onConflict: 'user_id' });
+
+                if (error) throw error;
+                
+                telegramData = { link_code: formattedCode, chat_id: null };
+                renderTelegramSection();
+                
+                // In a real app, we might start polling here to see if chat_id gets populated by webhook
+
+            } catch(e) {
+                console.error("Error generating code:", e);
+                alert("Could not generate a link code at this time.");
+            }
+        }
+
+        async function unlinkTelegram() {
+            if(!confirm("Are you sure you want to unlink Telegram? You will stop receiving medication reminders.")) return;
+            
+            if (!currentUser.id) {
+                // Mock behavior
+                telegramData = null;
+                renderTelegramSection();
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('telegram_users')
+                    .delete()
+                    .eq('user_id', currentUser.id);
+                
+                if (error) throw error;
+                
+                telegramData = null;
+                renderTelegramSection();
+            } catch (e) {
+                console.error("Error unlinking:", e);
+                alert("Failed to unlink Telegram.");
+            }
+        }
+
+        async function logout() {
+            if(!confirm("Are you sure you want to log out?")) return;
+            if(currentUser.id) {
+                await supabase.auth.signOut();
+            }
+            window.location.href = 'index.html'; // Or auth page
+        }
+
+        // Fire initialization on load
+        window.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
