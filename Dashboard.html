@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>MedBot - Today's Schedule</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "primary": "#003d9b",
+                        "on-surface": "#191c1e",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#edeef0",
+                        "surface-container-high": "#e7e8ea",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-surface-variant": "#434654",
+                        "background": "#f8f9fb",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#c3c6d6",
+                        "outline": "#737685",
+                        "primary-container": "#0052cc",
+                        "on-primary-container": "#c4d2ff",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "secondary-container": "#82f9be",
+                        "on-secondary-container": "#00734c",
+                    },
+                    "spacing": {
+                        "margin-desktop": "32px",
+                        "stack-sm": "8px",
+                        "margin-mobile": "16px",
+                        "unit": "4px",
+                        "stack-md": "16px",
+                        "stack-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8f9fb;
+            color: #191c1e;
+            min-height: max(884px, 100dvh);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c3c6d6; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #737685; }
+
+        /* Loader */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #003d9b;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 40px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-24 md:pb-0 font-body-md text-body-md antialiased hidden" id="app-body">
+    
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg">
+        
+        <!-- Dashboard Header & Progress -->
+        <div class="mb-stack-lg">
+            <h1 class="font-headline-lg-mobile md:font-headline-lg text-[28px] md:text-[32px] font-bold text-on-surface mb-stack-sm">Today's Schedule</h1>
+            <p id="current-date-display" class="font-body-md text-on-surface-variant mb-stack-md"></p>
+            
+            <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 md:p-6 shadow-sm">
+                <div class="flex justify-between items-end mb-unit">
+                    <div>
+                        <span class="font-label-lg font-semibold text-on-surface">Daily Progress</span>
+                        <div id="progress-text" class="font-body-sm text-[14px] text-on-surface-variant mt-1">0 of 0 medications taken</div>
+                    </div>
+                    <span id="progress-percent" class="font-headline-sm text-[20px] text-primary font-bold">0%</span>
+                </div>
+                <div class="w-full h-3 bg-surface-container-high rounded-full overflow-hidden mt-stack-sm">
+                    <div id="progress-bar" class="h-full bg-primary rounded-full transition-all duration-500 ease-out" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule List Container -->
+        <div id="schedule-list" class="flex flex-col gap-stack-md">
+            <div class="loader"></div>
+        </div>
+    </main>
+
+    <!-- BottomNavBar (Mobile Only) -->
+    <nav class="md:hidden fixed bottom-0 left-0 w-full h-20 flex justify-around items-center px-4 pb-safe bg-surface-container-lowest border-t border-outline-variant shadow-sm z-50">
+        <a class="flex flex-col items-center justify-center p-2 group" href="#">
+            <div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 mb-1 group-active:scale-95 transition-transform duration-150">
+                <span class="material-symbols-outlined fill" data-icon="today">today</span>
+            </div>
+            <span class="font-label-sm text-[12px] text-on-surface font-semibold">Today</span>
+        </a>
+        <a class="flex flex-col items-center justify-center p-2 group" href="#">
+            <div class="flex flex-col items-center justify-center text-on-surface-variant group-hover:bg-surface-container rounded-full px-4 py-1 mb-1 group-active:scale-95 transition-transform duration-150">
+                <span class="material-symbols-outlined" data-icon="medication">medication</span>
+            </div>
+            <span class="font-label-sm text-[12px] text-on-surface-variant group-hover:text-on-surface transition-colors">Meds</span>
+        </a>
+    </nav>
+
+    <!-- Supabase Logic -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+        const supabaseUrl = 'https://nzlsvtquirifyjjpekaa.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56bHN2dHF1aXJpZnlqanBla2FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MjQ3OTUsImV4cCI6MjA5NjQwMDc5NX0.GsHMQrI17QULABnjiQDT3MGqnI1AEmh5gx-CY5BLA1M'
+        const supabase = createClient(supabaseUrl, supabaseKey)
+
+        let currentUser = null;
+        let todayDateStr = '';
+
+        // Initialize Authentication and verify session
+        async function init() {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'index.html'; // Kick out if not logged in
+                return;
+            }
+            currentUser = session.user;
+            document.getElementById('app-body').classList.remove('hidden');
+
+            // Setup Date display
+            const today = new Date();
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            document.getElementById('current-date-display').textContent = today.toLocaleDateString('en-US', options);
+            
+            // Format for DB queries (YYYY-MM-DD)
+            todayDateStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
+            loadDashboardData();
+        }
+
+        // Format DB time (HH:MM:SS) to 12-hour AM/PM format
+        function formatTime(timeStr) {
+            const [hourStr, minuteStr] = timeStr.split(':');
+            let hours = parseInt(hourStr);
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            return `${String(hours).padStart(2, '0')}:${minuteStr} ${ampm}`;
+        }
+
+        async function loadDashboardData() {
+            try {
+                const today = new Date();
+                const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
+
+                // 1. Fetch active medications with their schedules
+                const { data: medications, error: medsError } = await supabase
+                    .from('medications')
+                    .select(`
+                        id, name, notes, image_url,
+                        schedules (id, time_utc, days_of_week)
+                    `)
+                    .eq('user_id', currentUser.id)
+                    .eq('is_active', true)
+                    .lte('start_date', todayDateStr)
+                    .or(`end_date.is.null,end_date.gte.${todayDateStr}`);
+
+                if (medsError) throw medsError;
+
+                // 2. Fetch today's logs
+                const { data: logs, error: logsError } = await supabase
+                    .from('medication_logs')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .eq('scheduled_date', todayDateStr);
+
+                if (logsError) throw logsError;
+
+                // 3. Combine Data
+                let scheduleItems = [];
+                
+                (medications || []).forEach(med => {
+                    (med.schedules || []).forEach(schedule => {
+                        if (schedule.days_of_week.includes(dayOfWeek)) {
+                            const log = (logs || []).find(l => l.schedule_id === schedule.id);
+                            
+                            scheduleItems.push({
+                                med_id: med.id,
+                                name: med.name,
+                                notes: med.notes,
+                                schedule_id: schedule.id,
+                                time_utc: schedule.time_utc,
+                                status: log ? log.status : 'pending',
+                                taken_at: log ? log.taken_at : null
+                            });
+                        }
+                    });
+                });
+
+                // Sort by time
+                scheduleItems.sort((a, b) => a.time_utc.localeCompare(b.time_utc));
+
+                renderDashboard(scheduleItems);
+
+            } catch (err) {
+                console.error("Error loading data:", err);
+                document.getElementById('schedule-list').innerHTML = `<p class="text-error text-center py-4">Failed to load schedule. Make sure your database tables are set up properly.</p>`;
+            }
+        }
+
+        function renderDashboard(items) {
+            const listContainer = document.getElementById('schedule-list');
+            listContainer.innerHTML = '';
+
+            if (items.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-10 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm">
+                        <span class="material-symbols-outlined text-4xl text-outline mb-2">event_available</span>
+                        <h3 class="text-on-surface font-semibold text-[18px]">No medications scheduled for today</h3>
+                        <p class="text-on-surface-variant text-[14px]">Take a break and relax!</p>
+                    </div>`;
+                updateProgress(0, 0);
+                return;
+            }
+
+            let totalDoses = items.length;
+            let takenDoses = items.filter(i => i.status === 'taken').length;
+
+            updateProgress(takenDoses, totalDoses);
+
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMin = now.getMinutes();
+            const currentTotalMins = currentHour * 60 + currentMin;
+
+            items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                const [hr, min] = item.time_utc.split(':').map(Number);
+                const schedTotalMins = hr * 60 + min;
+                
+                // Determine layout variant based on status and time
+                if (item.status === 'taken') {
+                    // --- TAKEN CARD ---
+                    const takenTimeStr = new Date(item.taken_at).toLocaleTimeString('en-US', { hour: '2-digit', minute:'2-digit' });
+                    itemDiv.className = "bg-surface-container-lowest border border-outline-variant rounded-xl p-4 md:p-6 shadow-sm opacity-60";
+                    itemDiv.innerHTML = `
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant flex-shrink-0">
+                                    <span class="material-symbols-outlined fill">medication</span>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h3 class="font-semibold text-[20px] text-on-surface">${item.name}</h3>
+                                        <span class="bg-surface-container-high text-on-surface-variant text-[12px] font-medium px-2 py-0.5 rounded-full">Taken</span>
+                                    </div>
+                                    <p class="text-[14px] text-on-surface-variant">${item.notes || 'No notes'}</p>
+                                    <div class="flex items-center gap-1 mt-2 text-on-surface-variant text-[12px] font-medium">
+                                        <span class="material-symbols-outlined text-[16px]">schedule</span>
+                                        <span>${formatTime(item.time_utc)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button disabled class="w-full md:w-auto h-12 px-6 flex items-center justify-center gap-2 bg-surface-container border border-outline-variant text-on-surface-variant font-semibold text-[14px] rounded-lg cursor-not-allowed">
+                                <span class="material-symbols-outlined text-[20px]">check_circle</span>
+                                Taken at ${takenTimeStr}
+                            </button>
+                        </div>
+                    `;
+                } else if (item.status === 'pending' && schedTotalMins <= currentTotalMins + 60) {
+                    // --- DUE NOW CARD (Due within 60 mins or Past Due) ---
+                    itemDiv.className = "bg-surface-container-lowest border border-primary rounded-xl p-4 md:p-6 shadow-[0_4px_12px_rgba(0,61,155,0.08)] relative overflow-hidden";
+                    itemDiv.innerHTML = `
+                        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary"></div>
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pl-2">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container flex-shrink-0">
+                                    <span class="material-symbols-outlined fill">medication</span>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h3 class="font-semibold text-[20px] text-on-surface">${item.name}</h3>
+                                        <span class="bg-error-container text-on-error-container text-[12px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[14px]">warning</span>
+                                            Due Now
+                                        </span>
+                                    </div>
+                                    <p class="text-[14px] text-on-surface-variant">${item.notes || 'No notes'}</p>
+                                    <div class="flex items-center gap-1 mt-2 text-primary text-[12px] font-bold">
+                                        <span class="material-symbols-outlined text-[16px]">schedule</span>
+                                        <span>${formatTime(item.time_utc)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="markAsTaken('${item.schedule_id}', '${item.med_id}', '${item.time_utc}')" class="w-full md:w-auto h-12 px-6 flex items-center justify-center gap-2 bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors active:opacity-80 font-semibold text-[14px] rounded-lg shadow-sm">
+                                <span class="material-symbols-outlined text-[20px]">check</span>
+                                Mark as Taken
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // --- UPCOMING CARD ---
+                    itemDiv.className = "bg-surface-container-lowest border border-outline-variant rounded-xl p-4 md:p-6 shadow-sm";
+                    itemDiv.innerHTML = `
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant flex-shrink-0">
+                                    <span class="material-symbols-outlined">medication</span>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h3 class="font-semibold text-[20px] text-on-surface">${item.name}</h3>
+                                    </div>
+                                    <p class="text-[14px] text-on-surface-variant">${item.notes || 'No notes'}</p>
+                                    <div class="flex items-center gap-1 mt-2 text-on-surface-variant text-[12px] font-medium">
+                                        <span class="material-symbols-outlined text-[16px]">schedule</span>
+                                        <span>${formatTime(item.time_utc)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="markAsTaken('${item.schedule_id}', '${item.med_id}', '${item.time_utc}')" class="w-full md:w-auto h-12 px-6 flex items-center justify-center gap-2 bg-transparent border border-outline hover:bg-surface-container transition-colors active:opacity-80 text-on-surface font-semibold text-[14px] rounded-lg">
+                                <span class="material-symbols-outlined text-[20px]">check</span>
+                                Mark as Taken
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                listContainer.appendChild(itemDiv);
+            });
+        }
+
+        function updateProgress(taken, total) {
+            const pct = total === 0 ? 0 : Math.round((taken / total) * 100);
+            document.getElementById('progress-text').textContent = `${taken} of ${total} medications taken`;
+            document.getElementById('progress-percent').textContent = `${pct}%`;
+            document.getElementById('progress-bar').style.width = `${pct}%`;
+        }
+
+        // Global function for the inline onclick handlers
+        window.markAsTaken = async function(scheduleId, medId, timeUtc) {
+            try {
+                // Upsert to medication_logs
+                // Since there is a unique constraint on (schedule_id, scheduled_date), 
+                // upserting handles the logic if it already existed as 'pending'
+                const { error } = await supabase
+                    .from('medication_logs')
+                    .upsert({
+                        schedule_id: scheduleId,
+                        medication_id: medId,
+                        user_id: currentUser.id,
+                        scheduled_date: todayDateStr,
+                        scheduled_time_utc: timeUtc,
+                        status: 'taken',
+                        taken_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'schedule_id, scheduled_date'
+                    });
+
+                if (error) throw error;
+                
+                // Reload dashboard after success
+                loadDashboardData();
+            } catch (err) {
+                console.error("Error marking as taken:", err);
+                alert("Failed to mark medication as taken.");
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

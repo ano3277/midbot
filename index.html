@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedBot Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-light: #f8fafc;
+            --primary-blue: #1d70f5;
+            --input-bg: #eef2f9;
+            --text-dark: #333;
+            --text-light: #64748b;
+            
+            --sidebar-bg: #1c1c1c;
+            --sidebar-active: #232b42;
+            --sidebar-text: #9ca3af;
+            --sidebar-text-active: #8ab4f8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- LOGIN SCREEN --- */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .logo-box {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #4ade80, #eab308, #f97316);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-box i {
+            color: white;
+            font-size: 24px;
+        }
+
+        .login-container h1 {
+            color: var(--primary-blue);
+            font-size: 32px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            width: 300px;
+        }
+
+        .auth-form label {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .auth-form input {
+            background-color: var(--input-bg);
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .auth-form input:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .auth-form button {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .auth-form button:hover {
+            background-color: #1557c0;
+        }
+
+        .toggle-auth {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+
+        .toggle-auth a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* --- DASHBOARD LAYOUT --- */
+        #dashboard-screen {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-light);
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--sidebar-bg);
+            padding: 0 20px;
+            height: 70px;
+            color: var(--sidebar-text);
+            flex-shrink: 0;
+            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background-color: #a5c8ff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .brand-title {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .brand-title span {
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--sidebar-text);
+        }
+
+        .main-nav {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .menu-items {
+            list-style: none;
+            display: flex;
+            gap: 5px;
+        }
+
+        .menu-items li {
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: var(--sidebar-text);
+        }
+
+        .menu-items li:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .menu-items li.active {
+            background-color: var(--sidebar-active);
+            color: var(--sidebar-text-active);
+        }
+
+        .menu-items li i {
+            font-size: 16px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-email {
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .sign-out {
+            color: var(--sidebar-text);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s;
+            background: none;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+        }
+        
+        .sign-out:hover {
+            color: #ef4444;
+        }
+
+        .main-content {
+            flex: 1;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+            background-color: #f8fafc;
+        }
+
+        #content-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #f8fafc;
+        }
+
+        #auth-error {
+            color: #ef4444;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+
+        /* --- MOBILE RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .app-header {
+                padding: 0 15px;
+                height: 60px;
+            }
+
+            .main-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background-color: var(--sidebar-bg);
+                height: 65px;
+                box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
+                z-index: 100;
+                align-items: center;
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+
+            .menu-items {
+                width: 100%;
+                justify-content: space-around;
+                height: 100%;
+                align-items: center;
+                margin: 0;
+                padding: 0;
+                gap: 0;
+            }
+
+            .menu-items li {
+                flex-direction: column;
+                gap: 4px;
+                font-size: 11px;
+                padding: 8px 0;
+                border-radius: 0;
+                flex: 1;
+                justify-content: center;
+                height: 100%;
+            }
+
+            .menu-items li i {
+                font-size: 20px;
+                margin-bottom: 2px;
+            }
+
+            .menu-items li.active {
+                background-color: transparent;
+                color: var(--sidebar-text-active);
+                border-top: 3px solid var(--sidebar-text-active);
+                padding-top: 5px; /* Offset the border to prevent jitter */
+            }
+
+            .menu-items li:hover {
+                background-color: transparent;
+            }
+
+            .user-profile {
+                gap: 10px;
+            }
+
+            .user-email {
+                display: none;
+            }
+            
+            .brand-title span {
+                display: none;
+            }
+
+            .main-content {
+                padding-bottom: 65px; /* Space for the bottom tabs */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-container">
+            <div style="display: flex; justify-content: center;">
+                <div class="logo-box">
+                    <i class="fas fa-prescription-bottle-medical"></i>
+                </div>
+            </div>
+            <h1>MedBot</h1>
+            
+            <form id="auth-form" class="auth-form">
+                <label>Email</label>
+                <input type="email" id="email" required placeholder="Enter your email address">
+                
+                <label>Password</label>
+                <input type="password" id="password" required placeholder="••••••">
+                
+                <button type="submit" id="submit-btn">Sign In</button>
+                <div id="auth-error"></div>
+                
+                <div class="toggle-auth">
+                    <span id="toggle-text">Don't have an account?</span> 
+                    <a id="toggle-mode">Sign Up</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="hidden">
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="brand-logo">
+                    <i class="fas fa-prescription-bottle-medical"></i>
+                </div>
+                <div class="brand-title">
+                    MedBot
+                    <span>TRACKER</span>
+                </div>
+            </div>
+
+            <nav class="main-nav">
+                <ul class="menu-items">
+                    <li class="active" data-page="Dashboard.html">
+                        <i class="fas fa-th-large"></i> <span>Dashboard</span>
+                    </li>
+                    <li data-page="Medications.html">
+                        <i class="fas fa-pills"></i> <span>Medications</span>
+                    </li>
+                    <li data-page="Calendar.html">
+                        <i class="far fa-calendar-alt"></i> <span>Calendar</span>
+                    </li>
+                    <li data-page="Statistics.html">
+                        <i class="fas fa-chart-bar"></i> <span>Statistics</span>
+                    </li>
+                    <li data-page="Settings.html">
+                        <i class="fas fa-cog"></i> <span>Settings</span>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="user-profile">
+                <div class="user-email" id="display-email">user@email.com</div>
+                <button class="sign-out" id="sign-out-btn" title="Sign Out">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <iframe id="content-frame" name="content-frame" src="about:blank"></iframe>
+        </main>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+        // Initialize Supabase with your provided .env variables
+        const supabaseUrl = 'https://nzlsvtquirifyjjpekaa.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56bHN2dHF1aXJpZnlqanBla2FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MjQ3OTUsImV4cCI6MjA5NjQwMDc5NX0.GsHMQrI17QULABnjiQDT3MGqnI1AEmh5gx-CY5BLA1M'
+        const supabase = createClient(supabaseUrl, supabaseKey)
+
+        // UI Elements
+        const loginScreen = document.getElementById('login-screen');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const authForm = document.getElementById('auth-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('submit-btn');
+        const toggleModeBtn = document.getElementById('toggle-mode');
+        const toggleText = document.getElementById('toggle-text');
+        const authError = document.getElementById('auth-error');
+        const displayEmail = document.getElementById('display-email');
+        const signOutBtn = document.getElementById('sign-out-btn');
+        const contentFrame = document.getElementById('content-frame');
+        const menuItems = document.querySelectorAll('.menu-items li');
+
+        let isSignUpMode = false;
+
+        // Check active session on load
+        async function checkSession() {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+                showDashboard(session.user);
+            } else {
+                showLogin();
+            }
+        }
+
+        // Toggle UI states
+        function showDashboard(user) {
+            loginScreen.classList.add('hidden');
+            dashboardScreen.classList.remove('hidden');
+            displayEmail.textContent = user.email;
+            
+            // Set default iframe page when opening dashboard
+            const activeItem = document.querySelector('.menu-items li.active');
+            if (activeItem) {
+                contentFrame.src = activeItem.getAttribute('data-page');
+            } else {
+                contentFrame.src = 'Dashboard.html';
+            }
+        }
+
+        function showLogin() {
+            dashboardScreen.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            authForm.reset();
+            authError.textContent = '';
+            contentFrame.src = 'about:blank';
+        }
+
+        // Setup sidebar navigation links with active state toggles
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                // Clear active class from all menu items
+                menuItems.forEach(el => el.classList.remove('active'));
+                
+                // Add active class to current selection
+                item.classList.add('active');
+                
+                // Load corresponding page in the fixed iframe
+                const page = item.getAttribute('data-page');
+                if (page) {
+                    contentFrame.src = page;
+                }
+            });
+        });
+
+        // Toggle between Sign In / Sign Up modes
+        toggleModeBtn.addEventListener('click', () => {
+            isSignUpMode = !isSignUpMode;
+            if (isSignUpMode) {
+                submitBtn.textContent = 'Sign Up';
+                toggleText.textContent = 'Already have an account?';
+                toggleModeBtn.textContent = 'Sign In';
+            } else {
+                submitBtn.textContent = 'Sign In';
+                toggleText.textContent = "Don't have an account?";
+                toggleModeBtn.textContent = 'Sign Up';
+            }
+            authError.textContent = '';
+        });
+
+        // Handle Form Submission
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            authError.textContent = 'Processing...';
+            submitBtn.disabled = true;
+
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            try {
+                if (isSignUpMode) {
+                    const { data, error } = await supabase.auth.signUp({ email, password });
+                    if (error) throw error;
+                    authError.style.color = '#10b981'; // Green for success
+                    authError.textContent = 'Success! Check your email or Sign In.';
+                } else {
+                    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    showDashboard(data.user);
+                }
+            } catch (error) {
+                authError.style.color = '#ef4444'; // Red for error
+                authError.textContent = error.message;
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Handle Sign Out
+        signOutBtn.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signOut();
+            if (!error) showLogin();
+        });
+
+        // Initialize
+        checkSession();
+
+    </script>
+</body>
+</html>
