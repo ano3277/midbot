@@ -390,7 +390,7 @@
                     .from('telegram_users')
                     .select('*')
                     .eq('user_id', currentUser.id)
-                    .single();
+                    .maybeSingle();
                 
                 if (tgErr && tgErr.code !== 'PGRST116') throw tgErr;
                 telegramData = tgData;
