@@ -486,35 +486,13 @@
                 document.getElementById('btn-tg-unlink').addEventListener('click', unlinkTelegram);
 
             } else if (hasPendingCode) {
-                // STATE 2: Pending connection (Code Generated)
+                // STATE 2: Pending connection (Code Generated, hidden from user)
                 badge.className = "bg-surface-container text-on-surface-variant text-[12px] font-medium px-3 py-1.5 rounded-full flex items-center gap-2";
                 badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-outline"></span> Pending...`;
                 
                 contentDiv.innerHTML = `
-                    <p class="text-[15px] text-on-surface">Link your Telegram account in one click:</p>
-                    <ol class="flex flex-col gap-3 text-[14px] text-on-surface-variant pl-2 border-l-2 border-surface-container-high ml-2">
-                        <li class="flex items-start gap-2 relative">
-                            <span class="font-bold text-primary w-4">1.</span>
-                            <span>Click <strong class="text-on-surface">"Open Telegram"</strong> below.</span>
-                        </li>
-                        <li class="flex items-start gap-2 relative">
-                            <span class="font-bold text-primary w-4">2.</span>
-                            <span>Tap <strong class="text-on-surface">"Start"</strong> in the Telegram bot.</span>
-                        </li>
-                        <li class="flex items-start gap-2 relative">
-                            <span class="font-bold text-primary w-4">3.</span>
-                            <span>Your account will be linked automatically.</span>
-                        </li>
-                    </ol>
-                    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-3 flex justify-between items-center mt-3">
-                        <div class="flex flex-col">
-                            <span class="text-xs text-on-surface-variant">Your link code (auto-sent via deep link):</span>
-                            <span class="font-mono text-[20px] font-bold tracking-[0.2em] text-on-surface">${telegramData.link_code}</span>
-                        </div>
-                        <button onclick="navigator.clipboard.writeText('${telegramData.link_code}'); alert('Copied!')" class="text-primary hover:bg-primary-fixed-dim/20 p-2 rounded-full transition-colors flex items-center justify-center" title="Copy Code">
-                            <span class="material-symbols-outlined text-[20px]">content_copy</span>
-                        </button>
-                    </div>
+                    <p class="text-[15px] text-on-surface">Waiting for Telegram connection.</p>
+                    <p class="text-[14px] text-on-surface-variant">Open the MedBot chat in Telegram and tap <strong class="text-on-surface">Start</strong> to complete linking.</p>
                 `;
                 
                 footerDiv.innerHTML = `
@@ -525,7 +503,7 @@
                         </a>
                     </div>
                 `;
-                document.getElementById('btn-tg-cancel').addEventListener('click', unlinkTelegram); // Cancel just unlinks/deletes
+                document.getElementById('btn-tg-cancel').addEventListener('click', unlinkTelegram);
 
             } else {
                 // STATE 3: Not Linked, No Code
@@ -538,7 +516,7 @@
                 
                 footerDiv.innerHTML = `
                     <button id="btn-tg-generate" class="w-full bg-primary text-on-primary h-12 rounded-lg font-semibold text-[14px] flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-all">
-                        Generate Link Code
+                        Connect to Telegram
                         <span class="material-symbols-outlined text-[18px]">add_link</span>
                     </button>
                 `;
@@ -614,6 +592,7 @@
                 const mockCode = generateLinkCode();
                 telegramData = { link_code: mockCode, chat_id: null };
                 renderTelegramSection();
+                window.open(`https://t.me/Meduaebot?start=${mockCode}`, '_blank');
                 return;
             }
 
@@ -625,7 +604,6 @@
                 const expiry = new Date(Date.now() + 15 * 60000).toISOString();
 
                 try {
-                    // Attempt insert — if link_code conflicts, DB unique constraint will reject it
                     const { error } = await supabase
                         .from('telegram_users')
                         .upsert({
@@ -636,7 +614,6 @@
                         }, { onConflict: 'user_id' });
 
                     if (error) {
-                        // If unique constraint violation on link_code, retry with new code
                         if (error.code === '23505' && error.message?.includes('link_code')) {
                             attempts++;
                             continue;
@@ -646,6 +623,7 @@
 
                     telegramData = { link_code: formattedCode, chat_id: null };
                     renderTelegramSection();
+                    window.open(`https://t.me/Meduaebot?start=${formattedCode}`, '_blank');
                     return;
 
                 } catch(e) {
