@@ -548,62 +548,94 @@
         const googleLoginBtn = document.getElementById('google-login-btn');
 
         let isSignUpMode = false;
+        let currentSessionUser = null; // Lock reference to prevent duplicate layout triggering
 
         // Create profile row for new users (Google OAuth or email signup)
         async function ensureProfile(user) {
-            const { data: existing } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('id', user.id)
-                .single();
-            if (!existing) {
-                const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
-                const avatar = user.user_metadata?.avatar_url || null;
-                await supabase.from('profiles').insert({
-                    id: user.id,
-                    display_name: displayName,
-                    avatar_url: avatar,
-                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-                    theme: 'system',
-                    elderly_mode: false
-                });
+            try {
+                const { data: existing } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('id', user.id)
+                    .single();
+                if (!existing) {
+                    const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+                    const avatar = user.user_metadata?.avatar_url || null;
+                    await supabase.from('profiles').insert({
+                        id: user.id,
+                        display_name: displayName,
+                        avatar_url: avatar,
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+                        theme: 'system',
+                        elderly_mode: false
+                    });
+                }
+            } catch (err) {
+                console.warn("Could not retrieve profile or user already exists:", err);
             }
         }
 
-        // Listen for auth state changes (handles OAuth redirect)
-        supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) {
-                ensureProfile(session.user);
-                showDashboard(session.user);
-            }
-        });
-
-        // Check active session on load
-        async function checkSession() {
-            const { data: { session } } = await supabase.auth.getSession()
+        // Listen for auth state changes (handles OAuth redirect and session recoveries)
+        supabase.auth.onAuthStateChange(async (event, session) => {
             if (session) {
-                showDashboard(session.user);
+                // Remove the long Supabase hash parameters from URL once logged in
+                if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error'))) {
+                    window.history.replaceState(null, null, window.location.pathname);
+                }
+                
+                await ensureProfile(session.user);
+                await showDashboard(session.user);
             } else {
                 showLogin();
             }
-        }
+        });
 
-        // Toggle UI states
-        function showDashboard(user) {
+        // Toggle UI states safely without double-triggering layout flashing
+        async function showDashboard(user) {
+            // Lock Check: If we are already signed in as this user, exit to prevent layout flickering
+            if (currentSessionUser && currentSessionUser.id === user.id) {
+                return;
+            }
+            
+            currentSessionUser = user;
+
             loginScreen.classList.add('hidden');
             dashboardScreen.classList.remove('hidden');
-            displayEmail.textContent = user.email;
             
-            // Set default iframe page when opening dashboard
-            const activeItem = document.querySelector('.menu-items li.active');
-            if (activeItem) {
-                contentFrame.src = activeItem.getAttribute('data-page');
-            } else {
-                contentFrame.src = 'Dashboard.html';
+            if (displayEmail.textContent !== user.email) {
+                displayEmail.textContent = user.email;
             }
+            
+            // Load user preferences directly during setup
+            try {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('elderly_mode, theme')
+                    .eq('id', user.id)
+                    .single();
+                if (profile) {
+                    if (profile.elderly_mode) {
+                        document.documentElement.setAttribute('data-elderly', 'true');
+                    } else {
+                        document.documentElement.removeAttribute('data-elderly');
+                    }
+                    const theme = profile.theme || 'system';
+                    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    document.documentElement.classList.toggle('dark', isDark);
+                    document.documentElement.classList.toggle('light', !isDark);
+                }
+            } catch (prefError) {
+                console.error("Could not fetch user preferences:", prefError);
+            }
+            
+            // Set default iframe page
+            const activeItem = document.querySelector('.menu-items li.active');
+            const targetPage = activeItem ? activeItem.getAttribute('data-page') : 'Dashboard.html';
+            contentFrame.src = targetPage;
         }
 
         function showLogin() {
+            currentSessionUser = null;
             dashboardScreen.classList.add('hidden');
             loginScreen.classList.remove('hidden');
             authForm.reset();
@@ -622,7 +654,7 @@
                 
                 // Load corresponding page in the fixed iframe
                 const page = item.getAttribute('data-page');
-                if (page) {
+                if (page && contentFrame.contentWindow.location.pathname !== page) {
                     contentFrame.src = page;
                 }
             });
@@ -667,7 +699,7 @@
                 } else {
                     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                     if (error) throw error;
-                    showDashboard(data.user);
+                    await showDashboard(data.user);
                 }
             } catch (error) {
                 authError.style.color = '#ef4444'; // Red for error
@@ -686,10 +718,12 @@
         // Google OAuth Login
         googleLoginBtn.addEventListener('click', async () => {
             authError.textContent = 'Redirecting to Google...';
+            const exactRedirectUrl = window.location.origin + window.location.pathname;
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.origin + '/index.html'
+                    redirectTo: exactRedirectUrl
                 }
             });
             if (error) {
@@ -710,31 +744,6 @@
                 document.documentElement.classList.toggle('light', !isDark);
             }
         });
-
-        // Load preferences from profile on session check
-        async function loadPreferences() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('elderly_mode, theme')
-                    .eq('id', session.user.id)
-                    .single();
-                if (profile) {
-                    if (profile.elderly_mode) {
-                        document.documentElement.setAttribute('data-elderly', 'true');
-                    }
-                    const theme = profile.theme || 'system';
-                    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                    document.documentElement.classList.toggle('dark', isDark);
-                    document.documentElement.classList.toggle('light', !isDark);
-                }
-            }
-        }
-        loadPreferences();
-
-        // Initialize
-        checkSession();
 
     </script>
 </body>
