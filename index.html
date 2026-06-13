@@ -574,10 +574,16 @@
 
             try {
                 if (isSignUpMode) {
-                    const { data, error } = await supabase.auth.signUp({ email, password });
+                    const { data, error } = await supabase.auth.signUp({ 
+                        email, 
+                        password,
+                        options: {
+                            emailRedirectTo: 'https://ano3277.github.io/midbot/Email_confirmed.html'
+                        }
+                    });
                     if (error) throw error;
                     authError.style.color = '#10b981'; // Green for success
-                    authError.textContent = 'Success! Check your email or Sign In.';
+                    authError.textContent = 'Account created successfully. Please check your email for a verification link.';
                 } else {
                     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                     if (error) throw error;
