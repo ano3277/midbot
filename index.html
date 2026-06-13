@@ -116,6 +116,49 @@
             background-color: #1557c0;
         }
 
+        /* --- Google Button --- */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            color: var(--text-light);
+            font-size: 13px;
+        }
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #d1d5db;
+        }
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 25px;
+            background: white;
+            color: #333;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+        .google-btn:hover {
+            background: #f8f9fa;
+            border-color: #bbb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .google-btn i {
+            font-size: 20px;
+            color: #4285f4;
+        }
+
         .toggle-auth {
             margin-top: 20px;
             text-align: center;
@@ -419,6 +462,13 @@
                 
                 <button type="submit" id="submit-btn">Sign In</button>
                 <div id="auth-error"></div>
+
+                <div class="divider">or</div>
+
+                <button type="button" id="google-login-btn" class="google-btn">
+                    <i class="fab fa-google"></i>
+                    Continue with Google
+                </button>
                 
                 <div class="toggle-auth">
                     <span id="toggle-text">Don't have an account?</span> 
@@ -495,8 +545,38 @@
         const signOutBtn = document.getElementById('sign-out-btn');
         const contentFrame = document.getElementById('content-frame');
         const menuItems = document.querySelectorAll('.menu-items li');
+        const googleLoginBtn = document.getElementById('google-login-btn');
 
         let isSignUpMode = false;
+
+        // Create profile row for new users (Google OAuth or email signup)
+        async function ensureProfile(user) {
+            const { data: existing } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', user.id)
+                .single();
+            if (!existing) {
+                const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+                const avatar = user.user_metadata?.avatar_url || null;
+                await supabase.from('profiles').insert({
+                    id: user.id,
+                    display_name: displayName,
+                    avatar_url: avatar,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+                    theme: 'system',
+                    elderly_mode: false
+                });
+            }
+        }
+
+        // Listen for auth state changes (handles OAuth redirect)
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                ensureProfile(session.user);
+                showDashboard(session.user);
+            }
+        });
 
         // Check active session on load
         async function checkSession() {
@@ -601,6 +681,21 @@
         signOutBtn.addEventListener('click', async () => {
             const { error } = await supabase.auth.signOut();
             if (!error) showLogin();
+        });
+
+        // Google OAuth Login
+        googleLoginBtn.addEventListener('click', async () => {
+            authError.textContent = 'Redirecting to Google...';
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + '/index.html'
+                }
+            });
+            if (error) {
+                authError.style.color = '#ef4444';
+                authError.textContent = error.message;
+            }
         });
 
         // Listen for changes from Settings iframe
