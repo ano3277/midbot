@@ -355,6 +355,7 @@
             currentUser = session.user;
             await loadUserData();
             bindEvents();
+            setupRealtime();
             setTimeout(refreshTelegramData, 500);
         }
 
@@ -641,6 +642,24 @@
                 console.error("Error unlinking:", e);
                 alert("Failed to unlink Telegram.");
             }
+        }
+
+        function setupRealtime() {
+            if (!currentUser.id) return;
+            
+            supabase
+                .channel('settings-tg-sync')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'telegram_users',
+                        filter: `user_id=eq.${currentUser.id}`,
+                    },
+                    () => refreshTelegramData()
+                )
+                .subscribe();
         }
 
         async function logout() {
