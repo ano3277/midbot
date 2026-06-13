@@ -167,6 +167,17 @@
             </div>
         </div>
 
+        <!-- Missed Dose Alert Banner -->
+        <div id="missed-dose-banner" class="hidden mb-stack-lg">
+            <div class="bg-error-container border border-red-300 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                <span class="material-symbols-outlined text-error text-2xl flex-shrink-0">warning</span>
+                <div>
+                    <h3 class="font-semibold text-on-error-container text-[16px]">Missed Doses</h3>
+                    <p id="missed-dose-text" class="text-on-error-container text-[14px] mt-1"></p>
+                </div>
+            </div>
+        </div>
+
         <!-- Schedule List Container -->
         <div id="schedule-list" class="flex flex-col gap-stack-md">
             <div class="loader"></div>
@@ -226,6 +237,8 @@
             todayDateStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
 
             loadDashboardData();
+            loadMissedDoses();
+            setupRealtime();
         }
 
         // Format DB time (HH:MM:SS) to 12-hour AM/PM format
@@ -420,6 +433,34 @@
             });
         }
 
+        async function loadMissedDoses() {
+            try {
+                const today = new Date();
+                const todayStr = today.toISOString().slice(0, 10);
+                const { data: missed, error } = await supabase
+                    .from('medication_logs')
+                    .select('medications!inner(name)')
+                    .eq('user_id', currentUser.id)
+                    .eq('scheduled_date', todayStr)
+                    .eq('status', 'missed');
+
+                if (error) throw error;
+
+                const banner = document.getElementById('missed-dose-banner');
+                const text = document.getElementById('missed-dose-text');
+
+                if (missed && missed.length > 0) {
+                    const names = [...new Set(missed.map(m => m.medications?.name).filter(Boolean))];
+                    banner.classList.remove('hidden');
+                    text.textContent = `You missed ${missed.length} dose${missed.length > 1 ? 's' : ''}: ${names.join(', ')}. Please check your schedule.`;
+                } else {
+                    banner.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error('Error loading missed doses:', err);
+            }
+        }
+
         function updateProgress(taken, total) {
             const pct = total === 0 ? 0 : Math.round((taken / total) * 100);
             document.getElementById('progress-text').textContent = `${taken} of ${total} medications taken`;
@@ -455,6 +496,42 @@
                 console.error("Error marking as taken:", err);
                 alert("Failed to mark medication as taken.");
             }
+        }
+
+        // --- REALTIME SUBSCRIPTION (tasks.txt spec) ---
+        function setupRealtime() {
+            const channel = supabase
+                .channel('dashboard-changes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'medication_logs',
+                        filter: `user_id=eq.${currentUser.id}`,
+                    },
+                    () => {
+                        loadDashboardData();
+                    }
+                )
+                .subscribe();
+
+            // Also subscribe to medications changes
+            const medChannel = supabase
+                .channel('dashboard-med-changes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'medications',
+                        filter: `user_id=eq.${currentUser.id}`,
+                    },
+                    () => {
+                        loadDashboardData();
+                    }
+                )
+                .subscribe();
         }
 
         init();

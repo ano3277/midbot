@@ -507,6 +507,9 @@
                     <li data-page="Settings.html">
                         <i class="fas fa-cog"></i> <span>Settings</span>
                     </li>
+                    <li data-page="Admin.html" id="nav-admin" class="hidden">
+                        <i class="fas fa-shield-alt"></i> <span>Admin</span>
+                    </li>
                 </ul>
             </nav>
 
@@ -606,6 +609,9 @@
                 displayEmail.textContent = user.email;
             }
             
+            // Show admin nav item
+            document.getElementById('nav-admin').classList.remove('hidden');
+
             // Load user preferences directly during setup
             try {
                 const { data: profile } = await supabase
