@@ -327,13 +327,6 @@
             return d.toISOString().split('T')[0];
         }
 
-        function utcToLocalTime(utcTimeStr) {
-            const [hours, minutes, seconds] = utcTimeStr.split(':');
-            const d = new Date();
-            d.setUTCHours(parseInt(hours), parseInt(minutes), parseInt(seconds || 0), 0);
-            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-        }
-
         function formatLocalTime(localTimeStr) {
             const [hourStr, minuteStr] = localTimeStr.split(':');
             let hours = parseInt(hourStr);
@@ -357,7 +350,7 @@
                     .from('medications')
                     .select(`
                         id, name, image_url, start_date, end_date, is_active,
-                        schedules (id, time_utc, days_of_week)
+                        schedules (id, time_utc, timezone, days_of_week)
                     `)
                     .eq('user_id', currentUser.id);
 
@@ -430,11 +423,9 @@
                 });
             });
 
-            // Sort expected doses by local time
+            // Sort expected doses by stored local time
             expected.sort((a, b) => {
-                const timeA = utcToLocalTime(a.schedule.time_utc);
-                const timeB = utcToLocalTime(b.schedule.time_utc);
-                return timeA.localeCompare(timeB);
+                return a.schedule.time_utc.localeCompare(b.schedule.time_utc);
             });
 
             return expected;
@@ -555,8 +546,7 @@
 
                 if (currentStatus === 'taken') takenCount++;
 
-                const localTime24 = utcToLocalTime(item.schedule.time_utc);
-                const localTime12 = formatLocalTime(localTime24);
+                const localTime12 = formatLocalTime(item.schedule.time_utc.slice(0, 5));
 
                 // Build UI card
                 const card = document.createElement('div');

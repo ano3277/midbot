@@ -244,18 +244,9 @@
             setupRealtime();
         }
 
-        // Convert UTC time string to local time string (HH:MM)
-        function utcToLocalTime(utcTimeStr) {
-            const [hours, minutes, seconds] = utcTimeStr.split(':');
-            const d = new Date();
-            d.setUTCHours(parseInt(hours), parseInt(minutes), parseInt(seconds || 0), 0);
-            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-        }
-
-        // Format DB time (HH:MM:SS) to 12-hour AM/PM format in local timezone
+        // Format stored local time (HH:MM:SS) to 12-hour AM/PM
         function formatTime(timeStr) {
-            const local = utcToLocalTime(timeStr);
-            const [hourStr, minuteStr] = local.split(':');
+            const [hourStr, minuteStr] = timeStr.split(':');
             let hours = parseInt(hourStr);
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
@@ -273,7 +264,7 @@
                     .from('medications')
                     .select(`
                         id, name, notes, image_url,
-                        schedules (id, time_utc, days_of_week)
+                        schedules (id, time_utc, timezone, days_of_week)
                     `)
                     .eq('user_id', currentUser.id)
                     .eq('is_active', true)
@@ -305,6 +296,7 @@
                                 notes: med.notes,
                                 schedule_id: schedule.id,
                                 time_utc: schedule.time_utc,
+                                timezone: schedule.timezone || 'UTC',
                                 status: log ? log.status : 'pending',
                                 taken_at: log ? log.taken_at : null
                             });

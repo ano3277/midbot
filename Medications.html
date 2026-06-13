@@ -335,6 +335,7 @@
         const supabase = createClient(supabaseUrl, supabaseKey)
 
         let currentUser = null;
+        let currentTimezone = 'UTC';
         let medicationsList = [];
 
         // UI Colors/Themes mapping for variety in UI based on index (Mockup design element)
@@ -378,8 +379,18 @@
             }
             currentUser = session.user;
             document.getElementById('app-body').classList.remove('hidden');
-            loadPreferences();
+            await loadPreferences();
             
+            // Fetch user's timezone from profile
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('timezone')
+                .eq('id', currentUser.id)
+                .single();
+            if (profile?.timezone) {
+                currentTimezone = profile.timezone;
+            }
+
             // Generate Days Checkboxes in Modal
             const daysContainer = document.getElementById('days-container');
             daysContainer.innerHTML = dayNamesMap.map(d => `
@@ -394,21 +405,7 @@
             loadMedications();
         }
 
-        // --- Timezone Conversion Utilities ---
-        function localTimeToUTC(localTimeStr) {
-            const [hours, minutes] = localTimeStr.split(':');
-            const d = new Date();
-            d.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-            return d.toISOString().split('T')[1].substring(0, 8); // "HH:MM:SS"
-        }
-
-        function utcToLocalTime(utcTimeStr) {
-            const [hours, minutes, seconds] = utcTimeStr.split(':');
-            const d = new Date();
-            d.setUTCHours(parseInt(hours), parseInt(minutes), parseInt(seconds || 0), 0);
-            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-        }
-
+        // --- Timezone Display Utilities ---
         function formatLocalTime(localTimeStr) {
             const [hourStr, minuteStr] = localTimeStr.split(':');
             let hours = parseInt(hourStr);
@@ -435,14 +432,14 @@
         // --- Main Load Function ---
         async function loadMedications() {
             try {
-                const { data, error } = await supabase
-                    .from('medications')
-                    .select(`
-                        id, name, notes, image_url, start_date, end_date, is_active,
-                        schedules (id, time_utc, days_of_week)
-                    `)
-                    .eq('user_id', currentUser.id)
-                    .order('created_at', { ascending: false });
+                    const { data, error } = await supabase
+                        .from('medications')
+                        .select(`
+                            id, name, notes, image_url, start_date, end_date, is_active,
+                            schedules (id, time_utc, timezone, days_of_week)
+                        `)
+                        .eq('user_id', currentUser.id)
+                        .order('created_at', { ascending: false });
 
                 if (error) throw error;
                 medicationsList = data;
@@ -484,10 +481,9 @@
                     daysArr = med.schedules[0].days_of_week; // Assuming all times for a med share the same days in this simplified UI
                     const daysStr = formatDaysText(daysArr);
                     
-                    // Convert all UTC times to formatted local times
+                    // Use stored local times directly
                     localTimes = med.schedules.map(s => {
-                        const local24 = utcToLocalTime(s.time_utc);
-                        return formatLocalTime(local24);
+                        return formatLocalTime(s.time_utc.slice(0, 5));
                     }).sort();
 
                     schedText = `${daysStr} (${localTimes.join(', ')})`;
@@ -597,9 +593,9 @@
                         if (days.includes(parseInt(cb.value))) cb.checked = true;
                     });
                     
-                    // Add time inputs converted to local
+                    // Add time inputs with stored local time directly
                     med.schedules.forEach(s => {
-                        window.addTimeInput(utcToLocalTime(s.time_utc));
+                        window.addTimeInput(s.time_utc.slice(0, 5));
                     });
                 } else {
                     window.addTimeInput('08:00');
@@ -729,10 +725,11 @@
                     savedMedId = newMed.id;
                 }
 
-                // 3. Insert Schedules
+                // 3. Insert Schedules (store local time + timezone, no UTC conversion)
                 const scheduleInserts = localTimes.map(localTimeStr => ({
                     medication_id: savedMedId,
-                    time_utc: localTimeToUTC(localTimeStr),
+                    time_utc: localTimeStr + ':00',
+                    timezone: currentTimezone,
                     days_of_week: selectedDays
                 }));
 

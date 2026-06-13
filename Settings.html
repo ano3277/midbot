@@ -338,11 +338,35 @@
         let currentProfile = null;
         let telegramData = null;
 
-        // Common Timezones Array
-        const timezones = [
-            "UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", 
-            "Europe/London", "Europe/Paris", "Asia/Dubai", "Asia/Tokyo", "Australia/Sydney"
-        ];
+        // All IANA Timezones (auto-detected via Intl or fallback to common list)
+        function getAllTimezones() {
+            if (typeof Intl !== 'undefined' && Intl.supportedValuesOf) {
+                return Intl.supportedValuesOf('timeZone');
+            }
+            return [
+                "UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+                "America/Anchorage", "America/Halifax", "America/Phoenix", "America/Puerto_Rico",
+                "America/Sao_Paulo", "America/Argentina/Buenos_Aires", "America/Bogota",
+                "America/Lima", "America/Mexico_City", "America/Panama", "America/Toronto",
+                "America/Vancouver", "Europe/London", "Europe/Paris", "Europe/Berlin",
+                "Europe/Madrid", "Europe/Rome", "Europe/Amsterdam", "Europe/Brussels",
+                "Europe/Vienna", "Europe/Stockholm", "Europe/Oslo", "Europe/Copenhagen",
+                "Europe/Helsinki", "Europe/Moscow", "Europe/Istanbul", "Europe/Athens",
+                "Europe/Lisbon", "Europe/Dublin", "Europe/Zurich", "Europe/Prague",
+                "Europe/Warsaw", "Europe/Budapest", "Europe/Bucharest", "Europe/Kyiv",
+                "Asia/Dubai", "Asia/Tokyo", "Asia/Shanghai", "Asia/Hong_Kong",
+                "Asia/Singapore", "Asia/Seoul", "Asia/Bangkok", "Asia/Kolkata",
+                "Asia/Karachi", "Asia/Dhaka", "Asia/Jakarta", "Asia/Manila",
+                "Asia/Taipei", "Asia/Riyadh", "Asia/Tehran", "Asia/Baghdad",
+                "Asia/Jerusalem", "Asia/Beirut", "Asia/Amman", "Asia/Kathmandu",
+                "Australia/Sydney", "Australia/Melbourne", "Australia/Perth",
+                "Australia/Brisbane", "Australia/Adelaide", "Australia/Hobart",
+                "Pacific/Auckland", "Pacific/Fiji", "Pacific/Honolulu",
+                "Pacific/Guam", "Pacific/Samoa", "Pacific/Tahiti",
+                "Africa/Cairo", "Africa/Casablanca", "Africa/Johannesburg",
+                "Africa/Lagos", "Africa/Nairobi", "Africa/Tunis"
+            ];
+        }
 
         async function init() {
             populateTimezones();
@@ -364,16 +388,18 @@
 
         function populateTimezones() {
             const select = document.getElementById('pref-timezone');
-            timezones.forEach(tz => {
+            const allTz = getAllTimezones();
+            allTz.forEach(tz => {
                 const opt = document.createElement('option');
                 opt.value = tz;
                 opt.textContent = tz;
                 select.appendChild(opt);
             });
-            // Try to guess default if nothing set
-            if (!select.value) {
-                try { select.value = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
-            }
+            // Auto-detect browser timezone as default
+            try {
+                const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                if (browserTz) select.value = browserTz;
+            } catch(e){}
         }
 
         async function loadUserData() {

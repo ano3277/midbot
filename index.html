@@ -554,11 +554,13 @@
         let currentSessionUser = null; // Lock reference to prevent duplicate layout triggering
 
         // Create profile row for new users (Google OAuth or email signup)
+        // And auto-update timezone on every login
         async function ensureProfile(user) {
             try {
+                const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
                 const { data: existing } = await supabase
                     .from('profiles')
-                    .select('id')
+                    .select('id, timezone')
                     .eq('id', user.id)
                     .single();
                 if (!existing) {
@@ -568,10 +570,12 @@
                         id: user.id,
                         display_name: displayName,
                         avatar_url: avatar,
-                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+                        timezone: browserTz,
                         theme: 'system',
                         elderly_mode: false
                     });
+                } else if (existing.timezone !== browserTz) {
+                    await supabase.from('profiles').update({ timezone: browserTz }).eq('id', user.id);
                 }
             } catch (err) {
                 console.warn("Could not retrieve profile or user already exists:", err);
