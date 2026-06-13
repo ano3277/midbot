@@ -603,21 +603,29 @@
             alert("Could not generate a unique code. Please try again.");
         }
 
-        function startTelegramPoll() {
-            stopTelegramPoll();
-            tgPollInterval = setInterval(async () => {
-                if (!currentUser.id) return;
-                const { data } = await supabase
+        async function checkTelegramConnection() {
+            if (!currentUser.id) return;
+            try {
+                const { data, error } = await supabase
                     .from('telegram_users')
                     .select('chat_id, telegram_username')
                     .eq('user_id', currentUser.id)
-                    .single();
+                    .maybeSingle();
+                if (error) throw error;
                 if (data && data.chat_id) {
                     stopTelegramPoll();
                     telegramData = { ...telegramData, chat_id: data.chat_id, telegram_username: data.telegram_username };
                     renderTelegramSection();
                 }
-            }, 3000);
+            } catch (err) {
+                console.error('Poll error:', err);
+            }
+        }
+
+        function startTelegramPoll() {
+            stopTelegramPoll();
+            checkTelegramConnection();
+            tgPollInterval = setInterval(checkTelegramConnection, 3000);
         }
 
         function stopTelegramPoll() {
@@ -661,6 +669,13 @@
             }
             window.location.href = 'index.html'; // Or auth page
         }
+
+        // Re-check when user returns to the tab (e.g. after Telegram app)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && telegramData && telegramData.link_code && !telegramData.chat_id) {
+                checkTelegramConnection();
+            }
+        });
 
         // Fire initialization on load
         window.addEventListener('DOMContentLoaded', init);
