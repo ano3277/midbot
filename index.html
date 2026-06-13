@@ -578,13 +578,16 @@
         // Listen for auth state changes (handles OAuth redirect and session recoveries)
         supabase.auth.onAuthStateChange(async (event, session) => {
             if (session) {
-                // Remove the long Supabase hash parameters from URL once logged in
-                if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error'))) {
-                    window.history.replaceState(null, null, window.location.pathname);
-                }
-                
-                await ensureProfile(session.user);
-                await showDashboard(session.user);
+                // Small delay to allow browser extensions (like Keeper/Bitwarden) 
+                // to process the login form before we hide it.
+                setTimeout(async () => {
+                    if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error'))) {
+                        window.history.replaceState(null, null, window.location.pathname);
+                    }
+                    
+                    await ensureProfile(session.user);
+                    await showDashboard(session.user);
+                }, 100);
             } else {
                 showLogin();
             }
