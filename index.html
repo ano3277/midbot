@@ -583,7 +583,7 @@
                     });
                     if (error) throw error;
                     authError.style.color = '#10b981'; // Green for success
-                    authError.textContent = 'Account created successfully. Please check your email for a verification link.';
+                    authError.innerHTML = 'Account created successfully. <br>Please check your inbox for a verification link. <br><span style="font-size: 0.9em; color: var(--text-light);">If you do not see it, kindly check your spam or junk folder.</span>';
                 } else {
                     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                     if (error) throw error;
