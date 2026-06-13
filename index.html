@@ -609,14 +609,11 @@
                 displayEmail.textContent = user.email;
             }
             
-            // Show admin nav item
-            document.getElementById('nav-admin').classList.remove('hidden');
-
             // Load user preferences directly during setup
             try {
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('elderly_mode, theme')
+                    .select('elderly_mode, theme, is_admin')
                     .eq('id', user.id)
                     .single();
                 if (profile) {
@@ -629,6 +626,9 @@
                     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
                     document.documentElement.classList.toggle('dark', isDark);
                     document.documentElement.classList.toggle('light', !isDark);
+                    if (profile.is_admin) {
+                        document.getElementById('nav-admin').classList.remove('hidden');
+                    }
                 }
             } catch (prefError) {
                 console.error("Could not fetch user preferences:", prefError);

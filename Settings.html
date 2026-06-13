@@ -491,35 +491,36 @@
                 badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-outline"></span> Pending...`;
                 
                 contentDiv.innerHTML = `
-                    <p class="text-[15px] text-on-surface">To receive reminders, link your account by following these steps:</p>
+                    <p class="text-[15px] text-on-surface">Link your Telegram account in one click:</p>
                     <ol class="flex flex-col gap-3 text-[14px] text-on-surface-variant pl-2 border-l-2 border-surface-container-high ml-2">
                         <li class="flex items-start gap-2 relative">
                             <span class="font-bold text-primary w-4">1.</span>
-                            <span>Open <strong class="text-on-surface">@Meduaebot</strong> on the Telegram app.</span>
+                            <span>Click <strong class="text-on-surface">"Open Telegram"</strong> below.</span>
                         </li>
                         <li class="flex items-start gap-2 relative">
                             <span class="font-bold text-primary w-4">2.</span>
-                            <span>Send the message <code class="bg-surface-container-high text-on-surface px-1.5 py-0.5 rounded font-mono">/start</code></span>
+                            <span>Tap <strong class="text-on-surface">"Start"</strong> in the Telegram bot.</span>
                         </li>
                         <li class="flex items-start gap-2 relative">
                             <span class="font-bold text-primary w-4">3.</span>
-                            <span class="flex flex-col gap-2 w-full">
-                                Enter your unique secure ID when prompted:
-                                <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-3 flex justify-between items-center mt-1">
-                                    <span class="font-mono text-[20px] font-bold tracking-[0.2em] text-on-surface">${telegramData.link_code}</span>
-                                    <button onclick="navigator.clipboard.writeText('${telegramData.link_code}'); alert('Copied!')" class="text-primary hover:bg-primary-fixed-dim/20 p-2 rounded-full transition-colors flex items-center justify-center" title="Copy Code">
-                                        <span class="material-symbols-outlined text-[20px]">content_copy</span>
-                                    </button>
-                                </div>
-                            </span>
+                            <span>Your account will be linked automatically.</span>
                         </li>
                     </ol>
+                    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-3 flex justify-between items-center mt-3">
+                        <div class="flex flex-col">
+                            <span class="text-xs text-on-surface-variant">Your link code (auto-sent via deep link):</span>
+                            <span class="font-mono text-[20px] font-bold tracking-[0.2em] text-on-surface">${telegramData.link_code}</span>
+                        </div>
+                        <button onclick="navigator.clipboard.writeText('${telegramData.link_code}'); alert('Copied!')" class="text-primary hover:bg-primary-fixed-dim/20 p-2 rounded-full transition-colors flex items-center justify-center" title="Copy Code">
+                            <span class="material-symbols-outlined text-[20px]">content_copy</span>
+                        </button>
+                    </div>
                 `;
                 
                 footerDiv.innerHTML = `
                     <div class="flex gap-3">
                         <button id="btn-tg-cancel" class="flex-1 bg-surface border border-outline-variant text-on-surface h-12 rounded-lg font-semibold text-[14px] hover:bg-surface-container transition-colors">Cancel</button>
-                        <a href="https://t.me/Meduaebot" target="_blank" class="flex-1 bg-primary text-on-primary h-12 rounded-lg font-semibold text-[14px] flex items-center justify-center gap-2 hover:opacity-90 transition-all">
+                        <a id="btn-open-telegram" href="https://t.me/Meduaebot?start=${telegramData.link_code}" target="_blank" class="flex-1 bg-primary text-on-primary h-12 rounded-lg font-semibold text-[14px] flex items-center justify-center gap-2 hover:opacity-90 transition-all">
                             Open Telegram <span class="material-symbols-outlined text-[18px]">open_in_new</span>
                         </a>
                     </div>

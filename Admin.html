@@ -251,8 +251,18 @@
             currentUser = session.user
             document.getElementById('admin-user-badge').textContent = session.user.email
 
-            // Load user theme preferences
-            const { data: profile } = await supabase.from('profiles').select('elderly_mode, theme').eq('id', currentUser.id).single()
+            // Load user theme preferences + admin check
+            const { data: profile } = await supabase.from('profiles').select('elderly_mode, theme, is_admin').eq('id', currentUser.id).single()
+            if (!profile?.is_admin) {
+                document.body.innerHTML = `
+                    <main class="w-full max-w-2xl mx-auto px-4 py-16 text-center">
+                        <span class="material-symbols-outlined text-6xl text-outline mb-4">lock</span>
+                        <h1 class="text-2xl font-bold text-on-surface mb-2">Access Denied</h1>
+                        <p class="text-on-surface-variant">You do not have admin privileges.</p>
+                        <a href="index.html" class="mt-6 inline-block bg-primary text-on-primary px-6 py-2.5 rounded-lg font-semibold">Go to Dashboard</a>
+                    </main>`
+                return
+            }
             if (profile) {
                 if (profile.elderly_mode) document.documentElement.setAttribute('data-elderly', 'true')
                 const theme = profile.theme || 'system'
