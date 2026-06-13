@@ -686,10 +686,14 @@
         // Google OAuth Login
         googleLoginBtn.addEventListener('click', async () => {
             authError.textContent = 'Redirecting to Google...';
+            
+            // Dynamically grab the exact current URL string to prevent Supabase from losing the /midbot/ directory.
+            const exactRedirectUrl = window.location.origin + window.location.pathname;
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: 'https://ano3277.github.io/midbot/index.html'
+                    redirectTo: exactRedirectUrl
                 }
             });
             if (error) {
