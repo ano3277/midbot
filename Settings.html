@@ -334,6 +334,7 @@
         let currentUser = null;
         let currentProfile = null;
         let telegramData = null;
+        let tgPollInterval = null;
 
         // Common Timezones Array
         const timezones = [
@@ -557,6 +558,7 @@
                 telegramData = { link_code: mockCode, chat_id: null };
                 renderTelegramSection();
                 window.open(`https://t.me/Meduaebot?start=${mockCode}`, '_blank');
+                startTelegramPoll();
                 return;
             }
 
@@ -588,6 +590,7 @@
                     telegramData = { link_code: formattedCode, chat_id: null };
                     renderTelegramSection();
                     window.open(`https://t.me/Meduaebot?start=${formattedCode}`, '_blank');
+                    startTelegramPoll();
                     return;
 
                 } catch(e) {
@@ -600,8 +603,33 @@
             alert("Could not generate a unique code. Please try again.");
         }
 
+        function startTelegramPoll() {
+            stopTelegramPoll();
+            tgPollInterval = setInterval(async () => {
+                if (!currentUser.id) return;
+                const { data } = await supabase
+                    .from('telegram_users')
+                    .select('chat_id, telegram_username')
+                    .eq('user_id', currentUser.id)
+                    .single();
+                if (data && data.chat_id) {
+                    stopTelegramPoll();
+                    telegramData = { ...telegramData, chat_id: data.chat_id, telegram_username: data.telegram_username };
+                    renderTelegramSection();
+                }
+            }, 3000);
+        }
+
+        function stopTelegramPoll() {
+            if (tgPollInterval) {
+                clearInterval(tgPollInterval);
+                tgPollInterval = null;
+            }
+        }
+
         async function unlinkTelegram() {
             if(!confirm("Are you sure you want to unlink Telegram? You will stop receiving medication reminders.")) return;
+            stopTelegramPoll();
             
             if (!currentUser.id) {
                 // Mock behavior
