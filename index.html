@@ -575,6 +575,11 @@
             if (event === 'SIGNED_IN' && session) {
                 ensureProfile(session.user);
                 showDashboard(session.user);
+                
+                // Remove the long Supabase hash parameters from URL once logged in
+                if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error'))) {
+                    window.history.replaceState(null, null, window.location.pathname);
+                }
             }
         });
 
@@ -588,18 +593,25 @@
             }
         }
 
-        // Toggle UI states
+        // Toggle UI states safely without double-triggering layout flashing
         function showDashboard(user) {
-            loginScreen.classList.add('hidden');
-            dashboardScreen.classList.remove('hidden');
-            displayEmail.textContent = user.email;
+            const wasHidden = dashboardScreen.classList.contains('hidden');
             
-            // Set default iframe page when opening dashboard
+            if (wasHidden) {
+                loginScreen.classList.add('hidden');
+                dashboardScreen.classList.remove('hidden');
+            }
+            
+            if (displayEmail.textContent !== user.email) {
+                displayEmail.textContent = user.email;
+            }
+            
+            // Only set or reset iframe source if it is currently blank or we just switched to the dashboard
             const activeItem = document.querySelector('.menu-items li.active');
-            if (activeItem) {
-                contentFrame.src = activeItem.getAttribute('data-page');
-            } else {
-                contentFrame.src = 'Dashboard.html';
+            const targetPage = activeItem ? activeItem.getAttribute('data-page') : 'Dashboard.html';
+            
+            if (wasHidden || contentFrame.src === 'about:blank' || !contentFrame.src) {
+                contentFrame.src = targetPage;
             }
         }
 
@@ -622,7 +634,7 @@
                 
                 // Load corresponding page in the fixed iframe
                 const page = item.getAttribute('data-page');
-                if (page) {
+                if (page && contentFrame.contentWindow.location.pathname !== page) {
                     contentFrame.src = page;
                 }
             });
