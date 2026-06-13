@@ -507,9 +507,6 @@
                     <li data-page="Settings.html">
                         <i class="fas fa-cog"></i> <span>Settings</span>
                     </li>
-                    <li data-page="Admin.html" id="nav-admin" class="hidden">
-                        <i class="fas fa-shield-alt"></i> <span>Admin</span>
-                    </li>
                 </ul>
             </nav>
 
@@ -613,7 +610,7 @@
             try {
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('elderly_mode, theme, is_admin')
+                    .select('elderly_mode, theme')
                     .eq('id', user.id)
                     .single();
                 if (profile) {
@@ -626,9 +623,6 @@
                     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
                     document.documentElement.classList.toggle('dark', isDark);
                     document.documentElement.classList.toggle('light', !isDark);
-                    if (profile.is_admin) {
-                        document.getElementById('nav-admin').classList.remove('hidden');
-                    }
                 }
             } catch (prefError) {
                 console.error("Could not fetch user preferences:", prefError);
