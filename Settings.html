@@ -456,7 +456,7 @@
             const contentDiv = document.getElementById('telegram-content');
             const badge = document.getElementById('telegram-status-badge');
 
-            const isConnected = telegramData && telegramData.chat_id;
+            const isConnected = telegramData && telegramData.chat_id != null;
             const hasPendingCode = telegramData && telegramData.link_code && !isConnected;
 
             if (isConnected) {
@@ -553,10 +553,10 @@
         }
 
         async function generateTelegramCode() {
-            if (!currentUser.id) {
+            if (!currentUser || !currentUser.id) {
                 // Mock behavior
                 const mockCode = generateLinkCode();
-                telegramData = { link_code: mockCode, chat_id: null };
+                telegramData = { link_code: mockCode, chat_id: null, telegram_username: 'MockUser' };
                 renderTelegramSection();
                 window.open(`https://t.me/Meduaebot?start=${mockCode}`, '_blank');
                 return;
@@ -603,7 +603,7 @@
         }
 
         async function refreshTelegramData() {
-            if (!currentUser.id) return;
+            if (!currentUser || !currentUser.id) return;
             try {
                 const { data, error } = await supabase
                     .from('telegram_users')
