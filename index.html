@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>MedBot Tracker</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -631,10 +634,10 @@
                 console.error("Could not fetch user preferences:", prefError);
             }
             
-            // Set default iframe page
+            // Set default iframe page with cache buster
             const activeItem = document.querySelector('.menu-items li.active');
             const targetPage = activeItem ? activeItem.getAttribute('data-page') : 'Dashboard.html';
-            contentFrame.src = targetPage;
+            contentFrame.src = targetPage + '?v=' + Date.now();
         }
 
         function showLogin() {
@@ -655,10 +658,10 @@
                 // Add active class to current selection
                 item.classList.add('active');
                 
-                // Load corresponding page in the fixed iframe
+                // Load corresponding page in the fixed iframe with cache buster
                 const page = item.getAttribute('data-page');
-                if (page && contentFrame.contentWindow.location.pathname !== page) {
-                    contentFrame.src = page;
+                if (page) {
+                    contentFrame.src = page + '?v=' + Date.now();
                 }
             });
         });
