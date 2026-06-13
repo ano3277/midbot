@@ -241,9 +241,18 @@
             setupRealtime();
         }
 
-        // Format DB time (HH:MM:SS) to 12-hour AM/PM format
+        // Convert UTC time string to local time string (HH:MM)
+        function utcToLocalTime(utcTimeStr) {
+            const [hours, minutes, seconds] = utcTimeStr.split(':');
+            const d = new Date();
+            d.setUTCHours(parseInt(hours), parseInt(minutes), parseInt(seconds || 0), 0);
+            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+
+        // Format DB time (HH:MM:SS) to 12-hour AM/PM format in local timezone
         function formatTime(timeStr) {
-            const [hourStr, minuteStr] = timeStr.split(':');
+            const local = utcToLocalTime(timeStr);
+            const [hourStr, minuteStr] = local.split(':');
             let hours = parseInt(hourStr);
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
