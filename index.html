@@ -694,6 +694,13 @@
                         }
                     });
                     if (error) throw error;
+                    
+                    // Check if user already exists (Supabase email enumeration protection workaround)
+                    // If the user already exists, Supabase returns a user object but the identities array is empty
+                    if (data?.user?.identities && data.user.identities.length === 0) {
+                        throw new Error("An account with this email address already exists. Please sign in instead.");
+                    }
+
                     authError.style.color = '#10b981'; // Green for success
                     authError.innerHTML = 'Account created successfully. <br>Please check your inbox for a verification link. <br><span style="font-size: 0.9em; color: var(--text-light);">If you do not see it, kindly check your spam or junk folder.</span>';
                 } else {
