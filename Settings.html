@@ -392,8 +392,8 @@
                     .eq('user_id', currentUser.id)
                     .maybeSingle();
                 
-                if (tgErr && tgErr.code !== 'PGRST116') throw tgErr;
-                telegramData = tgData;
+                if (tgErr) throw tgErr;
+                telegramData = tgData || null;
 
                 renderUI();
 
@@ -603,15 +603,30 @@
         }
 
         async function refreshTelegramData() {
-            if (!currentUser || !currentUser.id) return;
+            if (!currentUser.id) return;
             try {
-                const { data, error } = await supabase
-                    .from('telegram_users')
-                    .select('*')
-                    .eq('user_id', currentUser.id)
-                    .maybeSingle();
-                if (error) throw error;
-                telegramData = data || null;
+                const { data: session } = await supabase.auth.getSession();
+                const token = session?.access_token;
+                if (!token) return;
+                const url = `${supabaseUrl}/rest/v1/telegram_users?user_id=eq.${currentUser.id}&select=*`;
+                const res = await fetch(url, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                if (!res.ok) {
+                    if (res.status === 406) {
+                        telegramData = null;
+                        renderTelegramSection();
+                        return;
+                    }
+                    throw new Error(`${res.status}`);
+                }
+                const data = await res.json();
+                telegramData = Array.isArray(data) && data.length > 0 ? data[0] : null;
                 renderTelegramSection();
             } catch (err) {
                 console.error('Refresh error:', err);
@@ -674,6 +689,7 @@
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) refreshTelegramData();
         });
+        window.addEventListener('focus', refreshTelegramData);
 
         // Fire initialization on load
         window.addEventListener('DOMContentLoaded', init);
