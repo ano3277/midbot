@@ -334,7 +334,6 @@
         let currentUser = null;
         let currentProfile = null;
         let telegramData = null;
-        let tgChannel = null;
 
         // Common Timezones Array
         const timezones = [
@@ -356,6 +355,7 @@
             currentUser = session.user;
             await loadUserData();
             bindEvents();
+            setTimeout(refreshTelegramData, 500);
         }
 
         function populateTimezones() {
@@ -558,7 +558,6 @@
                 telegramData = { link_code: mockCode, chat_id: null };
                 renderTelegramSection();
                 window.open(`https://t.me/Meduaebot?start=${mockCode}`, '_blank');
-                startTgRealtime();
                 return;
             }
 
@@ -590,7 +589,6 @@
                     telegramData = { link_code: formattedCode, chat_id: null };
                     renderTelegramSection();
                     window.open(`https://t.me/Meduaebot?start=${formattedCode}`, '_blank');
-                    startTgRealtime();
                     return;
 
                 } catch(e) {
@@ -603,34 +601,24 @@
             alert("Could not generate a unique code. Please try again.");
         }
 
-        function startTgRealtime() {
-            stopTgRealtime();
+        async function refreshTelegramData() {
             if (!currentUser.id) return;
-            tgChannel = supabase
-                .channel('tg-link')
-                .on('postgres_changes',
-                    { event: 'UPDATE', schema: 'public', table: 'telegram_users', filter: `user_id=eq.${currentUser.id}` },
-                    (payload) => {
-                        if (payload.new && payload.new.chat_id) {
-                            stopTgRealtime();
-                            telegramData = { ...telegramData, chat_id: payload.new.chat_id, telegram_username: payload.new.telegram_username };
-                            renderTelegramSection();
-                        }
-                    }
-                )
-                .subscribe();
-        }
-
-        function stopTgRealtime() {
-            if (tgChannel) {
-                supabase.removeChannel(tgChannel);
-                tgChannel = null;
+            try {
+                const { data, error } = await supabase
+                    .from('telegram_users')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+                if (error) throw error;
+                telegramData = data || null;
+                renderTelegramSection();
+            } catch (err) {
+                console.error('Refresh error:', err);
             }
         }
 
         async function unlinkTelegram() {
             if(!confirm("Are you sure you want to unlink Telegram? You will stop receiving medication reminders.")) return;
-            stopTgRealtime();
             
             if (!currentUser.id) {
                 // Mock behavior
@@ -663,12 +651,9 @@
             window.location.href = 'index.html'; // Or auth page
         }
 
-        // Re-check when user returns to the tab (e.g. after Telegram app)
+        // Refresh data when user returns to the tab
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && telegramData && telegramData.link_code && !telegramData.chat_id) {
-                stopTgRealtime();
-                startTgRealtime();
-            }
+            if (!document.hidden) refreshTelegramData();
         });
 
         // Fire initialization on load
