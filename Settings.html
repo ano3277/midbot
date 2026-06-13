@@ -251,11 +251,6 @@
                 <div id="telegram-content" class="p-6 bg-surface-bright flex flex-col gap-4">
                     <!-- Javascript will inject state here (Unlinked, Generating, Linked) -->
                 </div>
-
-                <!-- Action Footer -->
-                <div class="p-4 bg-surface-container-lowest border-t border-surface-container" id="telegram-action-footer">
-                     <!-- Javascript will inject button here -->
-                </div>
             </div>
         </section>
 
@@ -457,27 +452,20 @@
 
         function renderTelegramSection() {
             const contentDiv = document.getElementById('telegram-content');
-            const footerDiv = document.getElementById('telegram-action-footer');
             const badge = document.getElementById('telegram-status-badge');
 
-            // Determine State
             const isConnected = telegramData && telegramData.chat_id;
             const hasPendingCode = telegramData && telegramData.link_code && !isConnected;
 
             if (isConnected) {
-                // STATE 1: Connected
                 badge.className = "bg-secondary-container text-on-secondary-container text-[12px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5";
                 badge.innerHTML = `<span class="material-symbols-outlined text-[14px]">check_circle</span> Connected`;
-                
+
                 contentDiv.innerHTML = `
-                    <p class="text-[16px] text-on-surface">Your account is successfully linked to Telegram.</p>
-                    <div class="flex items-center gap-2 mt-2">
+                    <div class="flex items-center gap-2">
                         <span class="material-symbols-outlined text-primary">account_circle</span>
                         <span class="text-on-surface-variant font-medium">@${telegramData.telegram_username || 'User'}</span>
                     </div>
-                `;
-                
-                footerDiv.innerHTML = `
                     <button id="btn-tg-unlink" class="w-full bg-error-container text-on-error-container hover:bg-error hover:text-on-error h-12 rounded-lg font-semibold text-[14px] flex items-center justify-center gap-2 transition-colors">
                         Unlink Telegram
                         <span class="material-symbols-outlined text-[18px]">link_off</span>
@@ -485,42 +473,18 @@
                 `;
                 document.getElementById('btn-tg-unlink').addEventListener('click', unlinkTelegram);
 
-            } else if (hasPendingCode) {
-                // STATE 2: Pending connection (Code Generated, hidden from user)
-                badge.className = "bg-surface-container text-on-surface-variant text-[12px] font-medium px-3 py-1.5 rounded-full flex items-center gap-2";
-                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-outline"></span> Pending...`;
-                
-                contentDiv.innerHTML = `
-                    <p class="text-[15px] text-on-surface">Waiting for Telegram connection.</p>
-                    <p class="text-[14px] text-on-surface-variant">Open the MedBot chat in Telegram and tap <strong class="text-on-surface">Start</strong> to complete linking.</p>
-                `;
-                
-                footerDiv.innerHTML = `
-                    <div class="flex gap-3">
-                        <button id="btn-tg-cancel" class="flex-1 bg-surface border border-outline-variant text-on-surface h-12 rounded-lg font-semibold text-[14px] hover:bg-surface-container transition-colors">Cancel</button>
-                        <a id="btn-open-telegram" href="https://t.me/Meduaebot?start=${telegramData.link_code}" target="_blank" class="flex-1 bg-primary text-on-primary h-12 rounded-lg font-semibold text-[14px] flex items-center justify-center gap-2 hover:opacity-90 transition-all">
-                            Open Telegram <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-                        </a>
-                    </div>
-                `;
-                document.getElementById('btn-tg-cancel').addEventListener('click', unlinkTelegram);
-
             } else {
-                // STATE 3: Not Linked, No Code
                 badge.className = "bg-surface-container text-on-surface-variant text-[12px] font-medium px-3 py-1.5 rounded-full flex items-center gap-2";
-                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-outline"></span> Not Connected`;
-                
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-outline"></span>${hasPendingCode ? ' Pending' : ' Not Connected'}`;
+
                 contentDiv.innerHTML = `
-                    <p class="text-[15px] text-on-surface">Link your Telegram account to instantly receive reliable reminders when it's time to take your medication.</p>
-                `;
-                
-                footerDiv.innerHTML = `
-                    <button id="btn-tg-generate" class="w-full bg-primary text-on-primary h-12 rounded-lg font-semibold text-[14px] flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-all">
-                        Connect to Telegram
+                    <p class="text-[15px] text-on-surface">${hasPendingCode ? 'Waiting for Telegram connection. Open the bot and tap Start to complete linking.' : 'Link your Telegram account to instantly receive reliable reminders when it\'s time to take your medication.'}</p>
+                    <button id="btn-tg-link" class="w-full bg-primary text-on-primary h-12 rounded-lg font-semibold text-[14px] flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-all">
+                        Link to Telegram
                         <span class="material-symbols-outlined text-[18px]">add_link</span>
                     </button>
                 `;
-                document.getElementById('btn-tg-generate').addEventListener('click', generateTelegramCode);
+                document.getElementById('btn-tg-link').addEventListener('click', generateTelegramCode);
             }
         }
 
