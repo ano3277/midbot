@@ -689,7 +689,7 @@
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.origin + '/index.html'
+                    redirectTo: 'https://ano3277.github.io/midbot/index.html'
                 }
             });
             if (error) {
